@@ -1,0 +1,259 @@
+# Specyfikacja Produktowa MVP: Projekt 2.1 — RAG Benchmark & Playground
+
+## 1. Podsumowanie projektu
+
+* **Czym jest ten projekt?** Narzędzie typu benchmark, evaluation & playground suite dla systemów RAG (Retrieval-Augmented Generation), działające domyślnie w oparciu o darmowe, lokalne modele AI (z architekturą otwartą na podpięcie komercyjnych API w przyszłości). Pozwala na zautomatyzowane uruchomienie kilku wariantów konfiguracji RAG na tym samym zbiorze dokumentów i pytań testowych, porównanie ich pod kątem jakości wyszukiwania, jakości odpowiedzi oraz wydajności, a następnie natychmiastowe korzystanie ze zwycięskiej konfiguracji w trybie interaktywnego czatu (Playground).
+* **Jaki konkretny problem rozwiązuje?** Zespoły budujące systemy RAG dobierają parametry (sposób dzielenia tekstu, metodę wyszukiwania, obecność rerankera) metodą prób i błędów, sprawdzając wyniki ręcznie na kilku pytaniach. Brak twardych metryk uniemożliwia obiektywne stwierdzenie, która konfiguracja faktycznie działa najlepiej dla danej bazy wiedzy. Ponadto po znalezieniu dobrej konfiguracji w skryptach testowych trzeba ją od nowa wdrażać, aby móc z niej korzystać.
+* **Kto jest jego docelowym użytkownikiem?** Inżynierowie AI/ML, programiści wdrażający rozwiązania oparte o LLM (szczególnie w środowiskach wymagających lokalnego przetwarzania danych bez kosztów API) oraz zespoły badawcze i studenckie.
+* **Jaka jest jego główna wartość dla użytkownika?** Obiektywizm decyzyjny, darmowe środowisko testowe i natychmiastowa użyteczność. Użytkownik w jednym miejscu wgrywa dane, sprawdza na twardych liczbach, która architektura RAG radzi sobie najlepiej, i jednym kliknięciem uruchamia gotowego do pracy asystenta opartego o zwycięską konfigurację.
+* **Jak wygląda typowy scenariusz użycia?**
+  * **A.** Użytkownik wgrywa paczkę dokumentów (np. pliki PDF/Markdown/TXT) oraz plik CSV/JSON z zestawem testowym (pytanie + wzorcowa odpowiedź + wzorcowy fragment tekstu).
+  * **B.** W interfejsie wybiera do porównania od 2 do 4 konfiguracji (np. Konfiguracje A, B, C, D różniące się chunkingiem, wyszukiwaniem i rerankingiem).
+  * **C.** Kliknięciem uruchamia eksperyment wykonywany na lokalnych modelach.
+  * **D.** Analizuje dashboard porównawczy (metryki jakościowe i czasowe) oraz podgląda szczegółowe odpowiedzi dla poszczególnych pytań.
+  * **E.** Przy najlepszej konfiguracji klika „Otwórz w Playground” i przechodzi do widoku czatu, gdzie może zadawać nowe pytania spoza zestawu testowego, korzystając z już zbudowanego indeksu.
+
+---
+
+## 2. Zakres MVP
+
+* **Jaki jest minimalny zestaw funkcjonalności pozwalający sprawdzić, czy projekt ma sens?** Możliwość wgrania prostych dokumentów tekstowych i zestawu pytań wzorcowych, uruchomienia min. 2 różnych konfiguracji RAG na lokalnych modelach, wygenerowania tabeli porównującej jakość wyszukiwania, jakość odpowiedzi i czas wykonania oraz możliwość zadania własnego pytania wybranej konfiguracji po zakończeniu testu.
+
+### Podział funkcjonalności:
+
+| Kategoria | Funkcjonalności | Uzasadnienie dla MVP |
+| :--- | :--- | :--- |
+| **Must-have (Niezbędne w MVP)** | • Wgrywanie dokumentów (.txt, .md oraz tekstowe .pdf).<br>• Wgrywanie zbioru testowego JSON/CSV (question, ground_truth_answer, expected_context_snippet).<br>• Konfigurator pozwalający zestawić od 2 do 4 wariantów RAG w jednym eksperymencie.<br>• 2 strategie chunkingu: stała liczba tokenów (z overlapem) vs podział według struktury dokumentu (nagłówki / akapity).<br>• 2 metody wyszukiwania: wektorowe (Dense) vs hybrydowe (Dense + BM25).<br>• Opcja Rerankingu: Włączony / Wyłączony (BAAI/bge-reranker-base).<br>• Lokalny silnik AI: Generowanie odpowiedzi i sędzia oparte o qwen3:8b, embeddingi oparte o nomic-embed-text.<br>• Metryki wyszukiwania: Recall@k oraz MRR (weryfikacja obecności wzorcowego fragmentu w pobranych chunkach).<br>• Metryki odpowiedzi (LLM-as-a-Judge): Poprawność względem wzorca (Answer Correctness) oraz zgodność z kontekstem / brak halucynacji (Faithfulness).<br>• Metryki systemowe: Czas wyszukiwania, całkowity czas odpowiedzi, liczba zużytych tokenów.<br>• Dashboard porównawczy: Tabela zbiorcza + widok szczegółowy pojedynczego pytania.<br>• Moduł RAG Playground (Czat): Interaktywny widok pozwalający zadawać nowe pytania wybranej (np. najlepszej) konfiguracji wraz z podglądem pobranych źródeł i czasu odpowiedzi. | Realizuje 100% podstawowego założenia eksperymentalnego z opisu projektu, zapewnia bezkosztowe działanie dzięki lokalnym modelom i domyka produkt użytkowym modułem Playground. |
+| **Should-have (Opcjonalne w MVP)** | • Możliwość podania w UI klucza API (np. OpenAI / OpenRouter) i przełączenia modeli z lokalnych na chmurowe.<br>• Kalkulator estymowanego kosztu (pokazujący, ile dany przebieg lokalny kosztowałby w komercyjnym API na podstawie zużytych tokenów).<br>• Aktywacja wybranej konfiguracji jako domyślnego endpointu REST (POST /api/v1/ask) dla zewnętrznych aplikacji.<br>• Metryka zdolności do przyznania się do braku informacji (obsługa pytań typu unanswerable).<br>• Eksport wyników eksperymentu do pliku CSV / JSON. | Bardzo przydatne funkcje rozszerzające, które można łatwo dopiąć na końcu prac, gdy główny potok działa już stabilnie. |
+| **Out of scope (Poza zakresem MVP)** | • Moduł automatycznej optymalizacji (Auto-RAG / Grid Search): Automatyczne testowanie dziesiątek kombinacji na lokalnym modelu 8B trwałoby wiele godzin.<br>• Pomiar zużycia pamięci RAM/VRAM dla poszczególnych konfiguracji.<br>• Metryka nDCG (wymaga stopniowanej skali trafności dla każdego fragmentu tekstu w zbiorze testowym).<br>• Weryfikacja poprawności formatowania cytowań w treści odpowiedzi.<br>• Zaawansowany OCR dla zeskanowanych PDF-ów.<br>• System kont użytkowników, logowanie i uprawnienia. | Elementy generujące największe ryzyko opóźnień (scope creep) lub nieprzystające do ograniczeń czasowych lokalnego wnioskowania LLM. |
+
+---
+
+## 3. User stories i scenariusze użycia
+
+### US-1: Przygotowanie bazy wiedzy i zestawu testowego
+Jako inżynier AI chcę wgrać pliki z dokumentacją oraz plik z pytaniami testowymi, aby przygotować środowisko do przeprowadzenia benchmarku.
+
+**Kryteria akceptacji:**
+* Użytkownik może wybrać z dysku wiele plików .md, .txt lub .pdf.
+* Użytkownik może wgrać plik .json lub .csv zawierający listę pytań z polami: `question`, `ground_truth_answer`, `expected_context_snippet`.
+* System waliduje strukturę pliku testowego i wyświetla czytelny komunikat błędu w przypadku brakujących pól.
+* System wyświetla podsumowanie wgranego zbioru: liczbę dokumentów, ich łączny rozmiar oraz liczbę pytań testowych.
+
+### US-2: Konfiguracja i uruchomienie eksperymentu
+Jako inżynier AI chcę skonfigurować do czterech wariantów potoku RAG i uruchomić dla nich test, aby sprawdzić wpływ chunkingu, metody wyszukiwania i rerankingu na wyniki.
+
+**Kryteria akceptacji:**
+* Użytkownik może zdefiniować od 2 do 4 konfiguracji w ramach jednego eksperymentu.
+* Dla każdej konfiguracji użytkownik wybiera: strategię chunkingu (stała liczba tokenów + rozmiar/overlap lub podział według struktury), metodę wyszukiwania (wektorowe lub hybrydowe), parametr k (liczba pobieranych fragmentów) oraz status rerankera (Tak/Nie).
+* Po kliknięciu „Uruchom benchmark” zadanie startuje w tle, a interfejs prezentuje aktualny postęp (np. Konfiguracja 2/4, pytanie 6/15).
+
+### US-3: Analiza zbiorczych wyników (Widok Makro)
+Jako inżynier AI chcę zobaczyć tabelę porównującą uśrednione metryki dla wszystkich uruchomionych konfiguracji, aby jednoznacznie wyłonić najlepszy wariant.
+
+**Kryteria akceptacji:**
+* Widok prezentuje tabelę zestawiającą konfiguracje (np. A, B, C, D) oraz uśrednione metryki: Recall@k, MRR, Poprawność odpowiedzi, Zgodność z kontekstem, Średni czas wyszukiwania (ms), Średni czas całkowity (s) oraz Zużyte tokeny.
+* Najlepszy wynik w każdym wierszu/kolumnie jest wyróżniony wizualnie.
+
+### US-4: Inspekcja pojedynczych pytań (Widok Mikro / Debugging)
+Jako inżynier AI chcę porównać wygenerowane odpowiedzi i pobrane fragmenty dokumentów dla konkretnego pytania we wszystkich konfiguracjach, aby zrozumieć przyczynę błędów lub halucynacji.
+
+**Kryteria akceptacji:**
+* Po wybraniu pytania z listy użytkownik widzi treść pytania, odpowiedź wzorcową oraz zestawione obok siebie odpowiedzi wygenerowane przez każdą konfigurację wraz z ocenami sędziego LLM i krótkim uzasadnieniem oceny.
+* Dla każdej konfiguracji można rozwinąć listę pobranych chunków, zobaczyć ich pozycję w rankingu oraz informację, czy dany chunk zawierał wymagany fragment wzorcowy (`expected_context_snippet`).
+
+### US-5: Korzystanie ze zwycięskiej konfiguracji (Moduł Playground)
+Jako użytkownik chcę otworzyć interaktywny czat dla wybranej konfiguracji po zakończeniu benchmarku, aby móc od razu zadawać jej nowe pytania i korzystać z najlepszego systemu RAG.
+
+**Kryteria akceptacji:**
+* Przy każdej ukończonej konfiguracji w tabeli wyników znajduje się przycisk „Otwórz w Playground”.
+* Kliknięcie przenosi do widoku czatu podpiętego bezpośrednio pod utworzony wcześniej indeks danej konfiguracji (bez konieczności ponownego indeksowania dokumentów).
+* Wpisanie dowolnego pytania zwraca odpowiedź wygenerowaną przez model, czas wyszukiwania i generacji oraz listę pobranych fragmentów źródłowych użytych do stworzenia odpowiedzi.
+
+---
+
+## 4. Proponowana architektura
+
+Dla MVP optymalną architekturą jest modularny monolit z asynchroniczną kolejką zadań w tle, komunikujący się z lokalnym serwerem modeli.
+
+### Główne komponenty systemu:
+1. **Frontend (Web UI):** Aplikacja przeglądarkowa odpowiadająca za wgrywanie plików, konfigurację eksperymentów, prezentację dashboardu wynikowego oraz interfejs czatu (Playground).
+2. **Backend API & Orchestrator:** Serwer aplikacyjny zarządzający stanem eksperymentów, obsługujący żądania HTTP i uruchamiający w tle procesy indeksowania oraz ewaluacji.
+3. **RAG Execution Engine (Silnik wykonawczy):** Moduł realizujący potok przetwarzania: Parsowanie -> Chunking -> Indeksowanie (Wektorowe + BM25) -> Wyszukiwanie -> (Opcjonalny) Reranking -> Generowanie odpowiedzi. Obsługuje zarówno przebiegi wsadowe (benchmark), jak i pojedyncze zapytania na żywo (Playground).
+4. **Evaluation Engine (Silnik oceniający):** Moduł obliczający deterministyczne metryki wyszukiwania (Recall@k, MRR), metryki systemowe (czas, tokeny) oraz odpytujący lokalny model LLM-as-a-Judge o jakość odpowiedzi.
+5. **Local AI Runtime (Warstwa modeli):**
+   * **Serwer Ollama:** Hostuje lokalnie model generatywny/oceniający (`qwen3:8b`) oraz model embeddingowy (`nomic-embed-text`).
+   * **Lokalny Reranker:** Model `BAAI/bge-reranker-base` ładowany przez bibliotekę Sentence-Transformers bezpośrednio w procesie Pythona.
+6. **Warstwa przechowywania danych (Storage):**
+   * **Relacyjna baza danych (SQLite):** Przechowuje metadane zbiorów danych, definicje eksperymentów, konfiguracje, szczegółowe wyniki ewaluacji oraz historię zapytań.
+   * **Baza wektorowa (Qdrant / ChromaDB):** Przechowuje kolekcje wektorów dla poszczególnych konfiguracji, dzięki czemu po zakończeniu benchmarku są one od razu gotowe do użycia w module Playground.
+
+### Przepływ danych pomiędzy komponentami:
+1. Użytkownik wgrywa dokumenty i plik testowy w Frontendzie -> Backend zapisuje pliki na dysku i rejestruje zbiór pytań w SQLite.
+2. Użytkownik startuje eksperyment -> Backend tworzy zadanie w tle i przekazuje konfiguracje do RAG Execution Engine.
+3. Dla każdej konfiguracji RAG Execution Engine:
+   * Dzieli dokumenty na chunki i odpytuje Ollamę (`nomic-embed-text`) o wektory, zapisując je w dedykowanej kolekcji w Bazie wektorowej (oraz tworzy indeks BM25).
+   * Sekwencyjnie przetwarza pytania testowe: pobiera chunki, opcjonalnie przepuszcza je przez Reranker (`bge-reranker-base`), a następnie wysyła kontekst i pytanie do Ollamy (`qwen3:8b`), mierząc czas każdego etapu i liczbę tokenów.
+4. Wyniki trafiają do Evaluation Engine, który wylicza Recall@k i MRR oraz wysyła pojedynczy ustrukturyzowany prompt do Ollamy (`qwen3:8b`) w celu oceny poprawności i wierności odpowiedzi.
+5. Wyliczone metryki są zapisywane w SQLite. Frontend odpytuje backend o status i prezentuje gotowy dashboard.
+6. Gdy użytkownik otwiera Playground dla wybranej konfiguracji, zapytanie z czatu trafia przez Backend prosto do RAG Execution Engine, który odpytuje istniejącą już kolekcję w Bazie wektorowej i zwraca odpowiedź na żywo.
+
+### Uzasadnienie decyzji i możliwości rozbudowy:
+* **Wzorzec Adaptera dla modeli (Łatwe przejście na płatne API):** Komunikacja z Ollamą odbywa się przez ujednolicony interfejs klienta (np. kompatybilny ze standardem OpenAI API). Dzięki temu dodanie w przyszłości modeli komercyjnych (OpenAI, Anthropic, Cohere) nie wymaga zmian w logice silnika RAG ani ewaluatora – wystarczy zmiana adresu URL endpointu, nazwy modelu i podanie klucza API.
+
+---
+
+## 5. Proponowany stack technologiczny
+
+| Warstwa | Wybrana technologia (MVP) | Alternatywy | Uzasadnienie wyboru |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | React (Vite + TypeScript) + TailwindCSS + shadcn/ui | Streamlit | Pozwala zbudować przejrzysty interfejs podzielony na zakładki (Konfigurator, Dashboard wyników, Playground) oraz łatwo zarządzać tabelami porównawczymi. (Jeśli w zespole brakuje frontendowców, należy zastąpić go przez Streamlit). |
+| **Backend** | FastAPI (Python 3.11+) | Django, Flask | Naturalne środowisko dla AI/ML, świetna walidacja schematów danych przez Pydantic, automatyczna dokumentacja Swagger/OpenAPI i prosta obsługa zadań w tle. |
+| **Baza relacyjna** | SQLite + SQLModel (SQLAlchemy) | PostgreSQL | Brak narzutu konfiguracyjnego (baza w jednym pliku), idealna do lokalnego MVP. Użycie ORM pozwala w razie potrzeby przełączyć się na PostgreSQL zmianą jednego wpisu w konfiguracji. |
+| **Baza wektorowa i wyszukiwanie** | Qdrant (kontener Docker) lub ChromaDB + biblioteka rank-bm25 | Milvus, pgvector | Błyskawiczne uruchomienie lokalne, prosta izolacja poszczególnych konfiguracji w osobnych kolekcjach oraz bezproblemowe łączenie wyników wektorowych z leksykalnym rankingiem BM25 (za pomocą algorytmu Reciprocal Rank Fusion). |
+| **Modele AI / ML (Domyślnie lokalne)** | • Ollama: qwen3:8b (~5,2 GB) dla generacji i sędziego LLM<br>• Ollama: nomic-embed-text (~274 MB) dla embeddingów<br>• Sentence-Transformers: BAAI/bge-reranker-base dla rerankingu | Zewnętrzne płatne API (OpenAI, Cohere) – jako opcja rozwojowa | • Zerowy koszt zapytań podczas developmentu i testów.<br>• Użycie tego samego modelu qwen3:8b do generowania odpowiedzi i oceniania (LLM-as-a-Judge) zapobiega ciągłemu przeładowywaniu wag w pamięci VRAM karty graficznej.<br>• Brak użycia ciężkich frameworków (LangChain) na rzecz czystego kodu w Pythonie ułatwia precyzyjny pomiar czasu każdego kroku. |
+| **Infrastruktura** | Docker + Docker Compose | Ręczna instalacja | Gwarantuje powtarzalność środowiska u wszystkich 6 członków zespołu oraz łatwe uruchomienie podczas demonstracji. |
+
+---
+
+## 6. Podział na moduły
+
+### 1. Moduł Ingestii i Chunkingu (`ingestion`)
+* **Odpowiedzialność:** Ekstrakcja czystego tekstu z plików oraz dzielenie go na fragmenty według wybranej strategii.
+* **Funkcjonalności:** Parser .txt/.md/.pdf, chunker o stałej liczbie tokenów (z konfigurowalnym rozmiarem i overlapem), chunker strukturalny (dzielenie po nagłówkach i akapitach).
+* **Zależności:** Brak. Zwraca ustandaryzowaną listę obiektów Chunk. Może być rozwijany w 100% niezależnie.
+
+### 2. Moduł Indeksowania i Wyszukiwania (`retrieval`)
+* **Odpowiedzialność:** Tworzenie indeksów dla poszczególnych konfiguracji, wyszukiwanie fragmentów oraz ich reranking.
+* **Funkcjonalności:** Integracja z nomic-embed-text, zapis/odczyt z bazy wektorowej, indeks BM25, łączenie wyników hybrydowych (RRF), integracja modelu BAAI/bge-reranker-base.
+* **Zależności:** Przyjmuje listę obiektów Chunk. Może być rozwijany niezależnie na sztucznych danych wejściowych.
+
+### 3. Moduł Wykonawczy i Playground (`runner`)
+* **Odpowiedzialność:** Orkiestracja eksperymentu, komunikacja z modelem generatywnym (qwen3:8b lub zewnętrznym API), pomiar czasów i tokenów oraz obsługa pojedynczych zapytań z widoku Playground.
+* **Funkcjonalności:** Abstrakcyjny klient LLM (obsługujący Ollamę i przyszłe API), sekwencyjna pętla wykonawcza eksperymentu, stoper pomiarowy, obsługa czatu Playground.
+* **Zależności:** Spina moduły ingestion, retrieval oraz evaluation.
+
+### 4. Moduł Ewaluacji (`evaluation`)
+* **Odpowiedzialność:** Wyliczanie metryk jakości wyszukiwania oraz jakości odpowiedzi.
+* **Funkcjonalności:** Algorytm obliczający Recall@k i MRR (sprawdzający pokrycie wzorcowego cytatu w pobranych chunkach), klient LLM-as-a-Judge (qwen3:8b) wymuszający odpowiedź w formacie JSON z oceną poprawności i wierności kontekstowi.
+* **Zależności:** Brak zależności od baz danych czy chunkerów (przyjmuje strukturę wejściową z tekstem pytania, wzorcem, pobranymi chunkami i odpowiedzią modelu). Może być rozwijany w 100% niezależnie.
+
+### 5. Moduł API i Interfejsu Webowego (`api & web`)
+* **Odpowiedzialność:** Warstwa komunikacji HTTP, zapis stanu w SQLite oraz interfejs graficzny użytkownika.
+* **Funkcjonalności:** Endpointy REST, modele bazodanowe, kreator eksperymentu, dashboard porównawczy, widok szczegółowy pytania, widok czatu Playground.
+* **Zależności:** Wymaga ustalonego na starcie kontraktu JSON. Frontend może być budowany równolegle na zamockowanych danych.
+
+---
+
+## 7. Plan implementacji
+
+### 1. Etap 1: Fundamenty projektu i kontrakty danych
+* Konfiguracja repozytorium, środowiska Docker Compose (wraz z bazą wektorową i lokalną Ollamą) oraz szkieletów FastAPI i React.
+* Zatwierdzenie kontraktów danych (Pydantic / TypeScript): Ustalenie dokładnych schematów dla `ExperimentConfig`, `TestQuestion`, `DocumentChunk`, `EvaluationResult` oraz `PlaygroundQuery`.
+* **Zależności:** Etap blokujący – musi zostać ukończony jako pierwszy, aby odblokować pracę równoległą.
+
+### 2. Etap 2: Minimalny działający przepływ end-to-end (Walking Skeleton)
+* Przepchnięcie jednego pliku tekstowego przez najprostszy chunker, zapis do bazy wektorowej z nomic-embed-text, wygenerowanie odpowiedzi przez qwen3:8b dla jednego pytania i wyświetlenie wyniku na ekranie.
+* **Zależności:** Wymaga Etapu 1.
+
+### 3. Etap 3: Najważniejsze funkcjonalności MVP (Praca w pełni równoległa)
+* **Ścieżka A:** Implementacja chunkingu strukturalnego, wyszukiwania hybrydowego (BM25 + RRF) oraz rerankera BAAI/bge-reranker-base.
+* **Ścieżka B:** Implementacja metryk Recall@k, MRR oraz promptów oceniających dla qwen3:8b (LLM-as-a-Judge).
+* **Ścieżka C:** Budowa docelowego UI: konfigurator wariantów, tabela porównawcza, widok inspekcji pytań oraz widok czatu Playground.
+* **Zależności:** Wszystkie trzy ścieżki mogą postępować jednocześnie niezależnie od siebie.
+
+### 4. Etap 4: Integracja, testy i optymalizacja czasu wykonania
+* Połączenie wszystkich modułów, przetestowanie pełnego przebiegu dla 4 konfiguracji (A, B, C, D), dostrojenie promptów sędziego LLM oraz weryfikacja płynnego przejścia z tabeli wyników do modułu Playground.
+* **Zależności:** Wymaga ukończenia Etapu 3.
+
+### 5. Etap 5: Przygotowanie zbioru demonstracyjnego i uruchomienie
+* Stworzenie dopracowanego zestawu pokazowego (dokumenty + pytania testowe, które wyraźnie eksponują różnice pomiędzy konfiguracjami A, B, C i D) oraz próba generalna prezentacji.
+
+---
+
+## 8. Podział pracy w zespole (6 osób)
+
+Podział minimalizuje konflikty w kodzie – każda osoba/para odpowiada za osobny pakiet i dostarcza jasno zdefiniowany interfejs.
+
+| Członek zespołu | Rola i zakres odpowiedzialności | Punkt styku z resztą zespołu |
+| :--- | :--- | :--- |
+| **Osoba 1** | **Architekt Backendu & Orkiestracji (api + runner):** Szkielet FastAPI, baza SQLite, kolejkowanie zadań eksperymentu, ujednolicony klient LLM (Ollama z opcją rozbudowy pod API chmurowe), zliczanie czasów i tokenów, endpointy dla modułu Playground. | Wystawia REST API dla Osób 2 i 6 oraz wywołuje moduły Osób 3, 4 i 5. |
+| **Osoba 2** | **Frontend Developer – Benchmark UI (web):** Widok wgrywania plików, formularz wyboru konfiguracji (A, B, C, D), pasek postępu eksperymentu, główna tabela porównawcza metryk. | Korzysta z REST API wystawionego przez Osobę 1. |
+| **Osoba 3** | **Inżynier Przetwarzania Danych & Datasetu (ingestion):** Ekstrakcja tekstu z PDF/MD/TXT, chunker stałej liczby tokenów, chunker strukturalny. Przygotowanie wzorcowego zbioru dokumentów i pytań testowych do weryfikacji systemu. | Dostarcza funkcję:<br>`chunk_documents(files, config) -> List[Chunk]`. |
+| **Osoba 4** | **Inżynier Wyszukiwania i Rerankingu (retrieval):** Integracja bazy wektorowej i modelu nomic-embed-text, indeksowanie BM25, wyszukiwanie hybrydowe (RRF) oraz integracja modelu BAAI/bge-reranker-base przez Sentence Transformers. | Dostarcza interfejs:<br>`index_chunks(collection_id, chunks)` oraz `search(collection_id, query, config) -> List[ScoredChunk]`. |
+| **Osoba 5** | **Inżynier Ewaluacji (evaluation):** Implementacja algorytmów Recall@k i MRR (niezależnych od rozmiaru chunka) oraz inżynieria promptów i walidacja JSON dla modelu qwen3:8b w roli sędziego. | Dostarcza funkcję:<br>`evaluate(question, ground_truth, retrieved_chunks, answer) -> EvaluationMetrics`. |
+| **Osoba 6** | **Full-stack / Playground & DevOps (web + infra):** Budowa widoku szczegółowej inspekcji pytania oraz interfejsu czatu RAG Playground na frontendzie, konfiguracja Docker Compose i wsparcie integracji backend-frontend. | Współpracuje z Osobą 2 na frontendzie (osobne podstrony/komponenty) i dba o konteneryzację. |
+
+---
+
+## 9. Największe ryzyka
+
+### 1. Czas wykonania benchmarku na lokalnym modelu qwen3:8b (Ryzyko wydajnościowe):
+* **Problem:** Dla 10 pytań i 4 konfiguracji system musi wykonać 40 generacji odpowiedzi i 40 ocen sędziego (łącznie 80 wywołań modelu 8B). Na karcie GPU (lub Apple Silicon M1/M2/M3) zajmie to kilka minut, ale na samym procesorze (CPU) czas może przekroczyć 30–40 minut. Ponadto wysyłanie równoległych zapytań do lokalnej Ollamy zatka pamięć VRAM.
+* **Mitygacja:**
+  * Wymuszenie sekwencyjnego (1 zapytanie naraz) przetwarzania w kolejce backendowej dla lokalnych modeli.
+  * Połączenie oceny poprawności odpowiedzi i wierności kontekstowi w jeden pojedynczy prompt oceniający (zwracający obiekt JSON z obiema ocenami naraz), co zmniejsza liczbę wywołań sędziego o połowę.
+  * Umożliwienie programistom podmiany modelu w pliku `.env` na mniejszy (np. `qwen3:1.7b`) na czas szybkich testów podczas pisania kodu.
+
+### 2. Obliczanie Recall@k i MRR przy różnych strategiach chunkingu (Ryzyko algorytmiczne):
+* **Problem:** Konfiguracja A (stała liczba tokenów) i Konfiguracja B (podział po strukturze) podzielą ten sam dokument na zupełnie inne kawałki o innych identyfikatorach. Nie można więc przypisać do pytania testowego sztywnego `chunk_id`.
+* **Mitygacja:** Zbiór testowy zawiera pole `expected_context_snippet` (krótki, jednoznaczny cytat z dokumentu zawierający odpowiedź). Pobrany chunk uznajemy za trafny, jeśli zawiera ten cytat (lub pokrywa się z nim w min. 80% na poziomie znaków/słów).
+
+### 3. Jakość rerankingu dla języka polskiego vs angielskiego (Ryzyko danych):
+* **Problem:** Model `BAAI/bge-reranker-base` był trenowany głównie na języku angielskim i chińskim. Jeśli dokumenty testowe będą po polsku, reranker może pogarszać wyniki zamiast je poprawiać.
+* **Mitygacja:** Przed pełną implementacją należy wykonać szybki test (Spike) na 5 zdaniach: jeśli dokumenty są po polsku, w konfiguracji Sentence Transformers wystarczy podmienić nazwę modelu na wielojęzyczny odpowiednik `BAAI/bge-reranker-v2-m3` (kod integracji pozostaje w 100% identyczny).
+
+### 4. Niestabilność formatu odpowiedzi z lokalnego modelu LLM-as-a-Judge:
+* **Problem:** Modele klasy 8B potrafią czasem zwrócić niepoprawny składniowo JSON podczas oceniania.
+* **Mitygacja:** Wykorzystanie natywnego parametru `format="json"` (lub schematu Pydantic w API Ollamy), ustawienie `temperature=0` oraz dodanie mechanizmu retry (ponowienia próby) w przypadku błędu parsowania.
+
+---
+
+## 10. Kryteria ukończenia MVP (Definition of Done)
+
+MVP uznajemy za gotowe do demonstracji, gdy spełnione są wszystkie poniższe warunki:
+
+1. Całe środowisko aplikacyjne uruchamia się powtarzalnie za pomocą Docker Compose i poprawnie komunikuje się z lokalną instancją Ollamy (`qwen3:8b`, `nomic-embed-text`) oraz lokalnym modelem `BAAI/bge-reranker-base`.
+2. Przez interfejs użytkownika można wgrać zestaw minimum 5 dokumentów oraz plik testowy zawierający minimum 10 pytań.
+3. Użytkownik może skonfigurować i uruchomić w jednym przebiegu 4 warianty z opisu projektu (Konfiguracje A, B, C, D).
+4. Eksperyment dla 10 pytań i 4 konfiguracji (na maszynie z akceleracją GPU / Apple Silicon) kończy się bez błędów w czasie poniżej 6 minut.
+5. Dashboard prezentuje kompletną tabelę porównawczą z obliczonymi metrykami: Recall@k, MRR, Poprawność odpowiedzi, Zgodność z kontekstem, Czas wyszukiwania, Czas całkowity oraz Zużyte tokeny, a także pozwala podejrzeć szczegóły pojedynczego pytania.
+6. Użytkownik może kliknąć przy dowolnej przetestowanej konfiguracji przycisk „Otwórz w Playground”, wpisać nowe pytanie w oknie czatu i w ciągu kilku sekund otrzymać odpowiedź wraz z listą pobranych fragmentów dokumentów.
+
+---
+
+## 11. Pytania i założenia
+
+### Fakty wynikające z ustaleń:
+* Budujemy platformę do eksperymentowania z architekturą RAG i automatycznego mierzenia wyników.
+* Porównujemy konfiguracje różniące się: chunkingiem (stała liczba tokenów vs struktura dokumentu), wyszukiwaniem (wektorowe vs hybrydowe) oraz obecnością rerankera (tak vs nie).
+* Na etapie MVP korzystamy z darmowych, lokalnych modeli: `qwen3:8b` (generowanie odpowiedzi oraz LLM-as-a-Judge), `nomic-embed-text` (embeddingi) oraz `BAAI/bge-reranker-base` przez Sentence Transformers (reranking).
+* Architektura musi umożliwiać łatwe przejście na płatne API (lub wybór dostawcy przez użytkownika) w kolejnych iteracjach.
+* System posiada moduł Playground, pozwalający korzystać z najlepszej wyłonionej konfiguracji po zakończeniu benchmarku.
+
+### Przyjęte założenia i domyślne decyzje:
+* **Założenie 1 (Sprzęt do prezentacji):** Zakładam, że przynajmniej jedna osoba w zespole (oraz komputer, na którym odbędzie się końcowa demonstracja projektu) dysponuje kartą graficzną NVIDIA (min. 8 GB VRAM) lub procesorem Apple Silicon (M1/M2/M3/M4 z min. 16 GB RAM), aby model qwen3:8b działał płynnie.
+* **Założenie 2 (Podział strukturalny):** Zakładam, że „podział według struktury dokumentu” w MVP opiera się o strukturę nagłówków Markdown (`#`, `##`, `###`) oraz podział na akapity dla plików .txt/.pdf.
+* **Założenie 3 (Współdzielone środowisko):** Zakładam brak systemu kont i logowania w MVP – wszystkie uruchomione eksperymenty i utworzone indeksy są dostępne od razu po otwarciu aplikacji.
+
+### Pytania do rozstrzygnięcia przez zespół przed startem:
+1. **W jakim języku będą dokumenty i pytania testowe (polski czy angielski)?**  
+   *(Domyślna decyzja: Jeśli po angielsku – zostajemy przy `BAAI/bge-reranker-base`. Jeśli po polsku – zmieniamy wagę w konfiguracji na `BAAI/bge-reranker-v2-m3`).*
+2. **Czy wszyscy w 6-osobowym zespole mają sprzęt zdolny uciągnąć lokalnie qwen3:8b?**  
+   *(Domyślna decyzja: Jeśli ktoś ma słabszy laptop bez dedykowanego GPU, podczas pisania kodu używa lżejszego modelu `qwen3:1.7b` lub łączy się z serwerem Ollama wystawionym w sieci lokalnej przez kolegę z mocniejszym komputerem).*
+3. **Kto w zespole czuje się pewnie w React/TypeScript?**  
+   *(Domyślna decyzja: Jeśli macie w zespole min. 1–2 osoby znające Reacta, budujemy UI w React + Tailwind. Jeśli wszyscy są wyłącznie programistami Python/AI, zmieniamy frontend na Streamlit).*
+
+---
+
+## Podsumowanie decyzyjne
+
+**Jednozdaniowa definicja MVP:**  
+Działająca lokalnie (w oparciu o modele `qwen3:8b`, `nomic-embed-text` i `bge-reranker-base`) aplikacja webowa, która pozwala wgrać dokumenty oraz pytania testowe, automatycznie porównać do czterech konfiguracji RAG pod kątem trafności wyszukiwania (Recall@k, MRR), jakości odpowiedzi i wydajności, a następnie od razu korzystać ze zwycięskiej konfiguracji w interaktywnym trybie czatu (Playground).
+
+### 5 najważniejszych decyzji do podjęcia przed rozpoczęciem implementacji:
+1. **Zatwierdzenie kontraktów JSON / Pydantic (Etap 1):** Ustalenie dokładnej struktury pliku wejściowego z pytaniami testowymi (w tym pola `expected_context_snippet`) oraz formatu odpowiedzi zwracanych przez poszczególne moduły.
+2. **Wybór technologii Frontendowej:** Ostateczna decyzja pomiędzy React + Tailwind a Streamlit na podstawie umiejętności 6-osobowego zespołu.
+3. **Język zbioru testowego i wersja Rerankera:** Decyzja, czy demonstracyjny zbiór danych przygotowujemy po angielsku czy po polsku (i ewentualna podmiana wagi bge-reranker na wersję wielojęzyczną).
+4. **Weryfikacja sprzętu pod lokalny model qwen3:8b:** Sprawdzenie czasu generowania pojedynczej odpowiedzi w Ollamie na komputerach zespołu i ustalenie maszyny docelowej do demonstracji projektu.
+5. **Zamrożenie zakresu MVP:** Formalna zgoda zespołu na odłożenie modułu automatycznej optymalizacji hiperparametrów (Auto-RAG) oraz metryk nDCG i zużycia RAM do kolejnej fazy po oddaniu działającego MVP.

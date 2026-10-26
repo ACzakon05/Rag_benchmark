@@ -6,7 +6,7 @@ Przewodnik dla agentów AI (i nowych osób) pracujących w tym repozytorium.
 
 RAG Benchmark & Playground — aplikacja do porównywania konfiguracji RAG na
 lokalnych modelach i korzystania ze zwycięskiej konfiguracji w czacie. Pełna
-specyfikacja produktowa: plik `Rag benchmark_*.txt` w katalogu głównym — to
+specyfikacja produktowa: plik `SPECIFICATION.md` (oraz `Rag benchmark_*.txt`) w katalogu głównym — to
 **źródło prawdy** dla zakresu, metryk i decyzji. Czytaj go przed większymi zmianami.
 
 Aktualny stan: **szkielet** — pliki zawierają docstringi i sygnatury, logika to
