@@ -1,0 +1,46 @@
+# ======================================================================
+# RAG Benchmark & Playground — orkiestracja lokalnego srodowiska.
+# Uwaga: Ollama uruchamiana jest zwykle na hoscie (dostep do GPU).
+# Kontenery komunikuja sie z nia przez host.docker.internal.
+# ======================================================================
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+    depends_on:
+      - qdrant
+    # command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    # command: npm run dev -- --host
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+
+  # Ollama — opcjonalnie w kontenerze. Domyslnie uruchamiana na hoscie,
+  # aby miec bezposredni dostep do GPU. Odkomentuj w razie potrzeby.
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ./ollama_data:/root/.ollama

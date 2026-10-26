@@ -1,0 +1,12 @@
+[
+  {
+    "question": "PRZYKLAD: jakie modele lokalne sa uzywane do generowania odpowiedzi?",
+    "ground_truth_answer": "Model qwen3:8b uruchamiany przez Ollame.",
+    "expected_context_snippet": "qwen3:8b dla generacji i sedziego LLM"
+  },
+  {
+    "question": "PRZYKLAD: ktory model odpowiada za embeddingi?",
+    "ground_truth_answer": "nomic-embed-text.",
+    "expected_context_snippet": "nomic-embed-text dla embeddingow"
+  }
+]

@@ -1,0 +1,4 @@
+# Frontend Streamlit — zaleznosci (wersje do doprecyzowania na Etapie 1).
+streamlit
+requests
+pandas

@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Env
+.env
+.env.local
+
+# Dane i artefakty (nie commitujemy wgrywanych plików ani baz)
+data/uploads/*
+!data/uploads/.gitkeep
+data/sqlite/*
+!data/sqlite/.gitkeep
+*.sqlite
+*.db
+
+# Baza wektorowa (lokalne woluminy)
+qdrant_storage/
+chroma/
+
+# Frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+*Zone.Identifier
