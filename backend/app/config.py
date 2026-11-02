@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     embedding_model: str = "ollama/nomic-embed-text"
     reranker_model: str = "BAAI/bge-reranker-base"
 
+    # Until ingestion, retrieval and evaluation exist, the worker writes made-up results so the
+    # frontend has data to show. Fake collections use their own embedding model name, so a
+    # real run never reuses fake chunks.
+    fake_runner: bool = True
+    fake_runner_delay_s: float = 0.3
+
     max_concurrent_llm_calls: int = 1
     judge_temperature: float = 0.0
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -7,6 +8,10 @@ from app.database import BaseDbModel
 from app.mappings import FKCollectionRef, FKDataset, FKExperiment, PrimaryKey, str_32, str_255
 from app.schemas.config import RetrievalMethod
 from app.schemas.experiment import ExperimentStatus
+
+if TYPE_CHECKING:
+    from app.models.chunk import Collection
+    from app.models.dataset import Dataset
 
 
 class Experiment(BaseDbModel):
@@ -19,6 +24,7 @@ class Experiment(BaseDbModel):
     generation_model: Mapped[str_255]
     judge_model: Mapped[str_255]
 
+    dataset: Mapped["Dataset"] = relationship()
     configs: Mapped[list["RagConfig"]] = relationship(
         back_populates="experiment",
         cascade="all, delete-orphan",
@@ -39,3 +45,4 @@ class RagConfig(BaseDbModel):
     reranking_enabled: Mapped[bool]
 
     experiment: Mapped[Experiment] = relationship(back_populates="configs")
+    collection: Mapped["Collection"] = relationship()

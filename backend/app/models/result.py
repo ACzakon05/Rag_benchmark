@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship
 
 from app.database import BaseDbModel
 from app.mappings import FKChunkRef, FKQuestion, FKQuestionResult, FKRagConfig, PrimaryKey
+
+if TYPE_CHECKING:
+    from app.models.chunk import Chunk
 
 
 class QuestionResult(BaseDbModel):
@@ -39,6 +44,8 @@ class RetrievedChunk(BaseDbModel):
     rank: Mapped[int]
     score: Mapped[float]
     contains_expected_snippet: Mapped[bool]
+
+    chunk: Mapped["Chunk"] = relationship()
 
 
 class PlaygroundQuery(BaseDbModel):

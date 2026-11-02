@@ -15,7 +15,13 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from app.config import settings
+from app.runner.fake_runner import run_fake_experiment
+
 
 def run_experiment(experiment_id: UUID) -> None:
     """Zadanie w tle: wykonuje caly eksperyment sekwencyjnie i zapisuje wyniki."""
+    if settings.fake_runner:
+        run_fake_experiment(experiment_id)
+        return
     raise NotImplementedError

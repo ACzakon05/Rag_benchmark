@@ -7,15 +7,17 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.database import DbSession
 from app.schemas.playground import PlaygroundQuery, PlaygroundResponse
+from app.services.playground_service import playground_service
 
 router = APIRouter()
 
 
-@router.post("/playground/ask", response_model=PlaygroundResponse)
-def ask(query: PlaygroundQuery):
+@router.post("/playground/ask")
+def ask(query: PlaygroundQuery, db: DbSession) -> PlaygroundResponse:
     """Pytanie na zywo do wybranej konfiguracji (gotowy indeks, bez reindeksacji)."""
-    raise NotImplementedError
+    return playground_service.ask(db, query)
 
 
 # Should-have: aktywacja wybranej konfiguracji jako stalego endpointu REST

@@ -12,17 +12,17 @@ from enum import Enum
 class ChunkingStrategy(str, Enum):
     """Strategia dzielenia dokumentu na fragmenty."""
 
-    FIXED_TOKENS = "fixed_tokens"   # stala liczba tokenow + overlap
-    STRUCTURAL = "structural"       # po naglowkach / akapitach
+    FIXED_TOKENS = "fixed_tokens"  # stala liczba tokenow + overlap
+    STRUCTURAL = "structural"  # po naglowkach / akapitach
 
 
 class RetrievalMethod(str, Enum):
     """Metoda wyszukiwania fragmentow."""
 
-    DENSE = "dense"         # wektorowe
-    HYBRID = "hybrid"       # dense + BM25 (laczone przez RRF)
+    DENSE = "dense"  # wektorowe
+    HYBRID = "hybrid"  # dense + BM25 (laczone przez RRF)
 
 
 class LLMProvider(str, Enum):
     OLLAMA = "ollama"
-    OPENAI = "openai"       # adapter kompatybilny z OpenAI API
+    OPENAI = "openai"  # adapter kompatybilny z OpenAI API
