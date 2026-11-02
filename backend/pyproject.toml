@@ -1,36 +1,38 @@
 [project]
 name = "rag-benchmark-backend"
 version = "0.1.0"
-description = "Backend API & orchestrator dla RAG Benchmark & Playground"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 
-# Zaleznosci sa tu zadeklarowane jako kontrakt techniczny (stack z sekcji 5
-# specyfikacji). Wersje do doprecyzowania na Etapie 1.
 dependencies = [
-    "fastapi",
-    "uvicorn[standard]",
+    "fastapi[standard]",
     "pydantic",
     "pydantic-settings",
-    "sqlmodel",
-    "python-multipart",   # upload plikow
-    "httpx",              # klient Ollama / OpenAI-compatible
-    "psycopg[binary]",    # sterownik PostgreSQL
-    "pgvector",           # typ Vector dla SQLAlchemy
+    "sqlalchemy>=2.0",
+    "alembic",
+    "psycopg[binary]",
+    "pgvector",
+    "celery[redis]",
+    "python-multipart",
+    "httpx",
     "rank-bm25",
-    "sentence-transformers",  # reranker bge
-    "pypdf",              # ekstrakcja tekstu z PDF
+    "sentence-transformers",
+    "pypdf",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest",
+    "pytest-cov",
+    "testcontainers[postgres]",
     "ruff",
-    "mypy",
 ]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["I", "F", "E", "W", "B", "UP", "SIM", "FAST"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
