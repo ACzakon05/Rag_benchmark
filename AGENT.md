@@ -38,7 +38,8 @@ Wynikają z ryzyk opisanych w specyfikacji (sekcja 9) — nie łam ich bez uzgod
    NIE po `chunk_id` — różne strategie chunkingu dają różne identyfikatory.
 4. **Dostęp do modeli tylko przez adapter** `app/llm/client.py` — nigdy bezpośrednio.
    Dzięki temu zmiana na komercyjne API nie dotyka logiki RAG/eval.
-5. **Osobny indeks (`collection_id` w pgvector) per konfiguracja** — po benchmarku gotowa dla Playground.
+5. **Kolekcja (`collection_id` w pgvector) per ustawienia chunkingu, współdzielona między
+   konfiguracjami** (ADR-0004) — po benchmarku gotowa dla Playground.
 6. **Granice modułów** z `docs/architecture.md` są kontraktem. ingestion, retrieval
    i evaluation da się rozwijać niezależnie na danych syntetycznych/mockach.
 

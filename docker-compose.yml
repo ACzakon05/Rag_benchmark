@@ -7,6 +7,10 @@ services:
   backend:
     build: ./backend
     env_file: .env
+    environment:
+      DB_HOST: postgres
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      UPLOAD_DIR: /app/data/uploads
     ports:
       - "8000:8000"
     volumes:
@@ -31,9 +35,9 @@ services:
   postgres:
     image: pgvector/pgvector:pg17
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-rag}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag}
-      POSTGRES_DB: ${POSTGRES_DB:-rag_benchmark}
+      POSTGRES_USER: ${DB_USER:-rag}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-rag}
+      POSTGRES_DB: ${DB_NAME:-rag_benchmark}
     ports:
       - "5432:5432"
     volumes:

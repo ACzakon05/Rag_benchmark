@@ -1,10 +1,31 @@
 from typing import Any
 
-from sqlalchemy import Index
+from sqlalchemy import Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import BaseDbModel
-from app.mappings import Embedding, FKDocument, FKRagConfig, PrimaryKey
+from app.mappings import Embedding, FKCollection, FKDataset, FKDocument, PrimaryKey, str_255
+from app.schemas.config import ChunkingStrategy
+
+
+class Collection(BaseDbModel):
+    __table_args__ = (
+        UniqueConstraint(
+            "dataset_id",
+            "chunking",
+            "chunk_size_tokens",
+            "chunk_overlap_tokens",
+            "embedding_model",
+            postgresql_nulls_not_distinct=True,
+        ),
+    )
+
+    id: Mapped[PrimaryKey]
+    dataset_id: Mapped[FKDataset]
+    chunking: Mapped[ChunkingStrategy]
+    chunk_size_tokens: Mapped[int | None]
+    chunk_overlap_tokens: Mapped[int | None]
+    embedding_model: Mapped[str_255]
 
 
 class Chunk(BaseDbModel):
@@ -13,7 +34,7 @@ class Chunk(BaseDbModel):
     __table_args__ = (Index("ix_chunk_collection_position", "collection_id", "position"),)
 
     id: Mapped[PrimaryKey]
-    collection_id: Mapped[FKRagConfig]
+    collection_id: Mapped[FKCollection]
     document_id: Mapped[FKDocument]
     position: Mapped[int]
     text: Mapped[str]

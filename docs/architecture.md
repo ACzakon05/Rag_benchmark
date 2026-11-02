@@ -20,12 +20,13 @@ Zgodnie z sekcją 8 specyfikacji produktowej (`Rag benchmark_*.txt`):
 
 1. Upload dokumentów + testsetu → backend zapisuje pliki i rejestruje pytania w PostgreSQL (Osoba 1 / Osoba 2).
 2. Start eksperymentu → backend tworzy zadanie w tle i przekazuje konfiguracje do runnera (Osoba 1).
-3. Dla każdej konfiguracji (sekwencyjnie):
-   - `chunk_documents` (Osoba 3) → `index_chunks` (Osoba 4, chunki + wektory w pgvector pod `collection_id` + indeks BM25),
+3. Dla każdej brakującej kolekcji (zbiór pocięty i zembeddowany wg danych ustawień chunkingu):
+   `chunk_documents` (Osoba 3) → `index_chunks` (Osoba 4, chunki + wektory w pgvector pod `collection_id` + indeks BM25).
+   Następnie dla każdej konfiguracji (sekwencyjnie):
    - per pytanie: `search` (Osoba 4) → (opcjonalny `rerank`, Osoba 4) → `generate` (Osoba 1 / qwen3:8b), pomiar czasu i tokenów.
 4. `evaluate` (Osoba 5): Recall@k, MRR (deterministyczne) + jeden prompt sędziego (poprawność + wierność).
 5. Metryki zapisywane w PostgreSQL; frontend odpytuje o status i renderuje dashboard (Osoba 1 / Osoba 2 / Osoba 6).
-6. Playground: zapytanie → runner → istniejący indeks (`collection_id`) → odpowiedź na żywo (Osoba 1 / Osoba 6).
+6. Playground: zapytanie → runner → istniejąca kolekcja konfiguracji (`collection_id`) → odpowiedź na żywo (Osoba 1 / Osoba 6).
 
 ## Kluczowe decyzje projektowe
 
@@ -38,9 +39,11 @@ Zgodnie z sekcją 8 specyfikacji produktowej (`Rag benchmark_*.txt`):
 - **Jeden prompt sędziego** zwracający poprawność + wierność naraz — o połowę mniej wywołań.
 - **PostgreSQL + pgvector jako jedyna baza** ([ADR-0001](adr/0001-postgres-pgvector.md)) —
   metadane, wyniki i wektory w jednym miejscu. Wektory w tabeli chunków (`vector(768)`
-  dla `nomic-embed-text`), izolacja konfiguracji przez kolumnę `collection_id`.
-- **Osobny indeks logiczny per konfiguracja** (`collection_id`) — gotowy do użycia w Playground
-  po benchmarku, bez ponownego indeksowania.
+  dla `nomic-embed-text`), kolekcje rozróżniane kolumną `collection_id`.
+- **Kolekcje współdzielone między konfiguracjami** ([ADR-0004](adr/0004-shared-collections.md)) —
+  kolekcja = zbiór pocięty i zembeddowany wg ustawień chunkingu; konfiguracje o tych samych
+  ustawieniach (także z różnych eksperymentów) korzystają z jednej kolekcji. Gotowa do użycia
+  w Playground po benchmarku, bez ponownego indeksowania.
 - **BM25 w pamięci (`rank-bm25`)** — budowany z chunków danej kolekcji pobranych z Postgresa.
 
 ## Granice modułów (kontrakty dla niezależnego developmentu)

@@ -2,7 +2,7 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship
 
 from app.database import BaseDbModel
-from app.mappings import FKChunk, FKQuestionResult, FKRagConfig, FKTestQuestion, PrimaryKey
+from app.mappings import FKChunkRef, FKQuestion, FKQuestionResult, FKRagConfig, PrimaryKey
 
 
 class QuestionResult(BaseDbModel):
@@ -10,7 +10,7 @@ class QuestionResult(BaseDbModel):
 
     id: Mapped[PrimaryKey]
     rag_config_id: Mapped[FKRagConfig]
-    question_id: Mapped[FKTestQuestion]
+    question_id: Mapped[FKQuestion]
     generated_answer: Mapped[str]
 
     recall_at_k: Mapped[float]
@@ -35,7 +35,7 @@ class RetrievedChunk(BaseDbModel):
 
     id: Mapped[PrimaryKey]
     question_result_id: Mapped[FKQuestionResult]
-    chunk_id: Mapped[FKChunk]
+    chunk_id: Mapped[FKChunkRef]
     rank: Mapped[int]
     score: Mapped[float]
     contains_expected_snippet: Mapped[bool]

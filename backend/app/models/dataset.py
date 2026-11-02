@@ -11,11 +11,11 @@ class Dataset(BaseDbModel):
     documents: Mapped[list["Document"]] = relationship(
         back_populates="dataset", cascade="all, delete-orphan", passive_deletes=True
     )
-    questions: Mapped[list["TestQuestion"]] = relationship(
+    questions: Mapped[list["Question"]] = relationship(
         back_populates="dataset",
         cascade="all, delete-orphan",
         passive_deletes=True,
-        order_by="TestQuestion.position",
+        order_by="Question.position",
     )
 
 
@@ -29,9 +29,7 @@ class Document(BaseDbModel):
     dataset: Mapped[Dataset] = relationship(back_populates="documents")
 
 
-class TestQuestion(BaseDbModel):
-    __test__ = False
-
+class Question(BaseDbModel):
     id: Mapped[PrimaryKey]
     dataset_id: Mapped[FKDataset]
     position: Mapped[int]
