@@ -4,7 +4,7 @@ Odpowiedzialnosc: spina ingestion + retrieval + evaluation, mierzy czasy i token
 prowadzi sekwencyjna petle wykonawcza (1 zapytanie naraz dla modeli lokalnych).
 
 Przeplyw (per konfiguracja):
-  1. chunk_documents -> index_chunks (dedykowana kolekcja)
+  1. chunk_documents -> index_chunks (brakujace kolekcje, wspoldzielone - ADR-0004)
   2. dla kazdego pytania: search -> (reranking) -> generate -> evaluate
   3. zapis wynikow do PostgreSQL; aktualizacja postepu (ExperimentProgress)
 
@@ -13,9 +13,9 @@ Szkielet — bez implementacji.
 
 from __future__ import annotations
 
-from app.schemas.experiment import ExperimentConfig
+from uuid import UUID
 
 
-def run_experiment(experiment_id: str, config: ExperimentConfig) -> None:
+def run_experiment(experiment_id: UUID) -> None:
     """Zadanie w tle: wykonuje caly eksperyment sekwencyjnie i zapisuje wyniki."""
     raise NotImplementedError
