@@ -15,14 +15,9 @@ venv/
 # Dane i artefakty (nie commitujemy wgrywanych plików ani baz)
 data/uploads/*
 !data/uploads/.gitkeep
-data/sqlite/*
-!data/sqlite/.gitkeep
 *.sqlite
 *.db
 
-# Baza wektorowa (lokalne woluminy)
-qdrant_storage/
-chroma/
 
 # Frontend
 node_modules/

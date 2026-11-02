@@ -21,7 +21,8 @@ from app.schemas.experiment import RagConfig
 def index_chunks(collection_id: str, chunks: list[DocumentChunk]) -> None:
     """Embedding (nomic-embed-text) + zapis do bazy wektorowej oraz indeks BM25.
 
-    Osobna kolekcja per konfiguracja, by po benchmarku byla gotowa dla Playground.
+    Wektory trafiaja do pgvector (tabela chunkow, kolumna `collection_id`),
+    osobny indeks per konfiguracja, by po benchmarku byl gotowy dla Playground.
     """
     raise NotImplementedError
 

@@ -38,7 +38,7 @@ Wynikają z ryzyk opisanych w specyfikacji (sekcja 9) — nie łam ich bez uzgod
    NIE po `chunk_id` — różne strategie chunkingu dają różne identyfikatory.
 4. **Dostęp do modeli tylko przez adapter** `app/llm/client.py` — nigdy bezpośrednio.
    Dzięki temu zmiana na komercyjne API nie dotyka logiki RAG/eval.
-5. **Osobna kolekcja wektorowa per konfiguracja** — po benchmarku gotowa dla Playground.
+5. **Osobny indeks (`collection_id` w pgvector) per konfiguracja** — po benchmarku gotowa dla Playground.
 6. **Granice modułów** z `docs/architecture.md` są kontraktem. ingestion, retrieval
    i evaluation da się rozwijać niezależnie na danych syntetycznych/mockach.
 
@@ -47,7 +47,7 @@ Wynikają z ryzyk opisanych w specyfikacji (sekcja 9) — nie łam ich bez uzgod
 - Python 3.11+, FastAPI, SQLModel. Formatowanie/lint: `ruff`. Typy: `mypy`.
 - Komentarze i docstringi: zwięźle, tylko gdy wyjaśniają "dlaczego".
 - Konfiguracja wyłącznie przez `.env` (wzór: `.env.example`) — bez hardkodowania modeli/URL.
-- Nie commituj danych użytkownika ani baz (patrz `.gitignore`): `data/`, `*.sqlite`, `qdrant_storage/`.
+- Nie commituj danych użytkownika ani baz (patrz `.gitignore`): `data/`, `pgdata/`.
 
 ## Jak uruchomić / sprawdzić
 

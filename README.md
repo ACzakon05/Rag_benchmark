@@ -27,8 +27,8 @@ czacie (**Playground**).
 |---------|-------------|
 | Frontend | **Streamlit** (Python) |
 | Backend | FastAPI (Python 3.11+), SQLModel |
-| Baza relacyjna | SQLite |
-| Baza wektorowa | Qdrant (Docker) + `rank-bm25` |
+| Baza danych | PostgreSQL 17 + pgvector (metadane, wyniki i wektory) |
+| Wyszukiwanie leksykalne | `rank-bm25` |
 | Modele (lokalne) | Ollama: `qwen3:8b` (generacja + sędzia), `nomic-embed-text` (embeddingi); `BAAI/bge-reranker-base` (Sentence-Transformers) |
 | Infrastruktura | Docker + Docker Compose |
 
@@ -52,7 +52,7 @@ czacie (**Playground**).
 │       ├── config.py         # ustawienia z .env
 │       ├── api/routes/       # datasets, experiments, results, playground
 │       ├── schemas/          # kontrakty Pydantic
-│       ├── db/               # SQLite + modele
+│       ├── db/               # PostgreSQL + pgvector, modele
 │       ├── ingestion/        # [Osoba 3] parsowanie + chunking
 │       ├── retrieval/        # [Osoba 4] indeks, wyszukiwanie, reranking
 │       ├── runner/           # [Osoba 1] orkiestracja + playground

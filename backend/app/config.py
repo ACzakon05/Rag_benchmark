@@ -14,10 +14,8 @@ class Settings(BaseSettings):
     api_port: int = 8000
     cors_origins: str = "http://localhost:8501"  # Streamlit dev
 
-    database_url: str = "sqlite:///./data/sqlite/app.db"
-
-    vector_db_provider: str = "qdrant"
-    qdrant_url: str = "http://qdrant:6333"
+    database_url: str = "postgresql+psycopg://rag:rag@localhost:5432/rag_benchmark"
+    embedding_dim: int = 768  # nomic-embed-text
 
     llm_provider: str = "ollama"
     ollama_base_url: str = "http://host.docker.internal:11434"

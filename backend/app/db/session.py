@@ -1,4 +1,4 @@
-"""Sesja i inicjalizacja bazy relacyjnej (SQLite + SQLModel).
+"""Sesja i inicjalizacja bazy relacyjnej (PostgreSQL + pgvector, SQLModel).
 
 Szkielet — bez logiki. Wlasciciel: Osoba 1.
 """
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 
 def init_db() -> None:
-    """Tworzy tabele na starcie aplikacji (Etap 1)."""
+    """Na starcie aplikacji: `CREATE EXTENSION IF NOT EXISTS vector`, potem tabele (Etap 1)."""
     raise NotImplementedError
 
 
