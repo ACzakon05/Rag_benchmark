@@ -5,6 +5,8 @@ Szkielet — pola ustalone na podstawie specyfikacji; do zatwierdzenia na Etapie
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -21,6 +23,8 @@ class DatasetSummary(BaseModel):
     """Podsumowanie wgranego zbioru prezentowane w UI."""
 
     dataset_id: str
+    name: str
+    created_at: datetime
     document_count: int
     total_size_bytes: int
     question_count: int

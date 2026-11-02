@@ -16,7 +16,7 @@ class LLMResponse:
 
 
 class LLMClient:
-    """The only place that talks to LiteLLM. `model` is a LiteLLM id, e.g. `ollama_chat/qwen3:8b`."""
+    """The only place that talks to LiteLLM. `model` is a LiteLLM id: `ollama_chat/qwen3:8b`."""
 
     def __init__(self, model: str, temperature: float = 0.0, max_json_attempts: int = 3):
         self.model = model

@@ -15,8 +15,9 @@ str_255 = Annotated[str, mapped_column(String(255))]
 Embedding = Annotated[list[float], mapped_column(Vector(settings.embedding_dim))]
 
 
-def _fk(target: str, ondelete: str = "CASCADE") -> MappedColumn:
-    return mapped_column(ForeignKey(f"{target}.id", ondelete=ondelete))
+def _fk(target: str, ondelete: str = "CASCADE", deferred: bool = False) -> MappedColumn:
+    options = {"deferrable": True, "initially": "DEFERRED"} if deferred else {}
+    return mapped_column(ForeignKey(f"{target}.id", ondelete=ondelete, **options))
 
 
 FKDataset = Annotated[UUID, _fk("dataset")]
@@ -29,6 +30,7 @@ FKQuestionResult = Annotated[UUID, _fk("question_result")]
 
 # Collections and chunks are shared between experiments, so references to them must not
 # cascade: deleting one while results still point at it should fail, not wipe the results.
-# NO ACTION rather than RESTRICT, so a dataset delete cascading to both sides still succeeds.
-FKCollectionRef = Annotated[UUID, _fk("collection", ondelete="NO ACTION")]
-FKChunkRef = Annotated[UUID, _fk("chunk", ondelete="NO ACTION")]
+# Deferred to commit, because a dataset delete cascades to both sides and Postgres would
+# otherwise check the reference before the cascade has removed the referencing rows.
+FKCollectionRef = Annotated[UUID, _fk("collection", ondelete="NO ACTION", deferred=True)]
+FKChunkRef = Annotated[UUID, _fk("chunk", ondelete="NO ACTION", deferred=True)]

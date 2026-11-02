@@ -20,9 +20,9 @@ class RetrievalMetrics(BaseModel):
 class JudgeMetrics(BaseModel):
     """Oceny LLM-as-a-Judge (jeden prompt zwraca obie oceny naraz)."""
 
-    answer_correctness: float        # poprawnosc wzgledem wzorca
-    faithfulness: float              # zgodnosc z kontekstem / brak halucynacji
-    rationale: str | None = None     # krotkie uzasadnienie oceny
+    answer_correctness: float | None  # poprawnosc wzgledem wzorca; None gdy sedzia zawiodl
+    faithfulness: float | None  # zgodnosc z kontekstem / brak halucynacji
+    rationale: str | None = None  # krotkie uzasadnienie oceny
 
 
 class SystemMetrics(BaseModel):
@@ -50,8 +50,8 @@ class ConfigAggregateResult(BaseModel):
 
     config_label: str
     retrieval: RetrievalMetrics
-    answer_correctness: float
-    faithfulness: float
+    answer_correctness: float | None
+    faithfulness: float | None
     avg_retrieval_time_ms: float
     avg_total_time_s: float
     total_tokens: int
@@ -61,5 +61,5 @@ class ExperimentResults(BaseModel):
     """Komplet wynikow eksperymentu zwracany do dashboardu."""
 
     experiment_id: str
-    aggregates: list[ConfigAggregateResult]       # tabela zbiorcza
-    per_question: list[QuestionResult]            # szczegoly
+    aggregates: list[ConfigAggregateResult]  # tabela zbiorcza
+    per_question: list[QuestionResult]  # szczegoly

@@ -14,8 +14,8 @@ class DocumentChunk(BaseModel):
     chunk_id: str
     document_id: str
     text: str
-    position: int                    # kolejnosc w dokumencie
-    metadata: dict = {}              # np. naglowek, numer strony
+    position: int  # kolejnosc w dokumencie
+    metadata: dict = {}  # np. naglowek, numer strony
 
 
 class ScoredChunk(BaseModel):

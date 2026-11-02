@@ -1,8 +1,8 @@
 """schema v1
 
-Revision ID: f70372b2da7f
+Revision ID: c704765a51bc
 Revises: 
-Create Date: 2026-11-02 18:09:52.437188
+Create Date: 2026-11-02 18:56:04.734123
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import pgvector.sqlalchemy
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'f70372b2da7f'
+revision: str = 'c704765a51bc'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,7 +27,7 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id', name=op.f('dataset_pkey'))
     )
     op.create_table('collection',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -37,9 +37,9 @@ def upgrade() -> None:
     sa.Column('chunk_overlap_tokens', sa.Integer(), nullable=True),
     sa.Column('embedding_model', sa.String(length=255), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['dataset_id'], ['dataset.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('dataset_id', 'chunking', 'chunk_size_tokens', 'chunk_overlap_tokens', 'embedding_model', postgresql_nulls_not_distinct=True)
+    sa.ForeignKeyConstraint(['dataset_id'], ['dataset.id'], name=op.f('collection_dataset_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('collection_pkey')),
+    sa.UniqueConstraint('dataset_id', 'chunking', 'chunk_size_tokens', 'chunk_overlap_tokens', 'embedding_model', name='collection_build_settings_key', postgresql_nulls_not_distinct=True)
     )
     op.create_table('document',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -48,8 +48,8 @@ def upgrade() -> None:
     sa.Column('path', sa.Text(), nullable=False),
     sa.Column('size_bytes', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['dataset_id'], ['dataset.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['dataset_id'], ['dataset.id'], name=op.f('document_dataset_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('document_pkey'))
     )
     op.create_table('experiment',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -61,8 +61,8 @@ def upgrade() -> None:
     sa.Column('generation_model', sa.String(length=255), nullable=False),
     sa.Column('judge_model', sa.String(length=255), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['dataset_id'], ['dataset.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['dataset_id'], ['dataset.id'], name=op.f('experiment_dataset_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('experiment_pkey'))
     )
     op.create_table('question',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -72,8 +72,8 @@ def upgrade() -> None:
     sa.Column('ground_truth_answer', sa.Text(), nullable=False),
     sa.Column('expected_context_snippet', sa.Text(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['dataset_id'], ['dataset.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['dataset_id'], ['dataset.id'], name=op.f('question_dataset_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('question_pkey'))
     )
     op.create_table('chunk',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -84,9 +84,9 @@ def upgrade() -> None:
     sa.Column('meta', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=768), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['collection_id'], ['collection.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['document_id'], ['document.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['collection_id'], ['collection.id'], name=op.f('chunk_collection_id_fkey'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['document_id'], ['document.id'], name=op.f('chunk_document_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('chunk_pkey'))
     )
     op.create_index('ix_chunk_collection_position', 'chunk', ['collection_id', 'position'], unique=False)
     op.create_table('rag_config',
@@ -98,10 +98,10 @@ def upgrade() -> None:
     sa.Column('top_k', sa.Integer(), nullable=False),
     sa.Column('reranking_enabled', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['collection_id'], ['collection.id'], ondelete='NO ACTION'),
-    sa.ForeignKeyConstraint(['experiment_id'], ['experiment.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('experiment_id', 'label')
+    sa.ForeignKeyConstraint(['collection_id'], ['collection.id'], name=op.f('rag_config_collection_id_fkey'), ondelete='NO ACTION', initially='DEFERRED', deferrable=True),
+    sa.ForeignKeyConstraint(['experiment_id'], ['experiment.id'], name=op.f('rag_config_experiment_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('rag_config_pkey')),
+    sa.UniqueConstraint('experiment_id', 'label', name=op.f('rag_config_experiment_id_label_key'))
     )
     op.create_table('playground_query',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -111,8 +111,8 @@ def upgrade() -> None:
     sa.Column('retrieval_time_ms', sa.Double(), nullable=False),
     sa.Column('generation_time_ms', sa.Double(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['rag_config_id'], ['rag_config.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['rag_config_id'], ['rag_config.id'], name=op.f('playground_query_rag_config_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('playground_query_pkey'))
     )
     op.create_table('question_result',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -130,10 +130,10 @@ def upgrade() -> None:
     sa.Column('prompt_tokens', sa.Integer(), nullable=False),
     sa.Column('completion_tokens', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['question_id'], ['question.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['rag_config_id'], ['rag_config.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('rag_config_id', 'question_id')
+    sa.ForeignKeyConstraint(['question_id'], ['question.id'], name=op.f('question_result_question_id_fkey'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['rag_config_id'], ['rag_config.id'], name=op.f('question_result_rag_config_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('question_result_pkey')),
+    sa.UniqueConstraint('rag_config_id', 'question_id', name=op.f('question_result_rag_config_id_question_id_key'))
     )
     op.create_table('retrieved_chunk',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -143,10 +143,10 @@ def upgrade() -> None:
     sa.Column('score', sa.Double(), nullable=False),
     sa.Column('contains_expected_snippet', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['chunk_id'], ['chunk.id'], ondelete='NO ACTION'),
-    sa.ForeignKeyConstraint(['question_result_id'], ['question_result.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('question_result_id', 'rank')
+    sa.ForeignKeyConstraint(['chunk_id'], ['chunk.id'], name=op.f('retrieved_chunk_chunk_id_fkey'), ondelete='NO ACTION', initially='DEFERRED', deferrable=True),
+    sa.ForeignKeyConstraint(['question_result_id'], ['question_result.id'], name=op.f('retrieved_chunk_question_result_id_fkey'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('retrieved_chunk_pkey')),
+    sa.UniqueConstraint('question_result_id', 'rank', name=op.f('retrieved_chunk_question_result_id_rank_key'))
     )
     # ### end Alembic commands ###
 

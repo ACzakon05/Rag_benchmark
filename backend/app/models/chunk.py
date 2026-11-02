@@ -16,6 +16,7 @@ class Collection(BaseDbModel):
             "chunk_size_tokens",
             "chunk_overlap_tokens",
             "embedding_model",
+            name="collection_build_settings_key",
             postgresql_nulls_not_distinct=True,
         ),
     )
