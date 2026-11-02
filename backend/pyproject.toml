@@ -14,7 +14,8 @@ dependencies = [
     "sqlmodel",
     "python-multipart",   # upload plikow
     "httpx",              # klient Ollama / OpenAI-compatible
-    "qdrant-client",
+    "psycopg[binary]",    # sterownik PostgreSQL
+    "pgvector",           # typ Vector dla SQLAlchemy
     "rank-bm25",
     "sentence-transformers",  # reranker bge
     "pypdf",              # ekstrakcja tekstu z PDF

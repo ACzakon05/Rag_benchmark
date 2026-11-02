@@ -6,7 +6,7 @@ prowadzi sekwencyjna petle wykonawcza (1 zapytanie naraz dla modeli lokalnych).
 Przeplyw (per konfiguracja):
   1. chunk_documents -> index_chunks (dedykowana kolekcja)
   2. dla kazdego pytania: search -> (reranking) -> generate -> evaluate
-  3. zapis wynikow do SQLite; aktualizacja postepu (ExperimentProgress)
+  3. zapis wynikow do PostgreSQL; aktualizacja postepu (ExperimentProgress)
 
 Szkielet — bez implementacji.
 """

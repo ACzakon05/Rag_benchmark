@@ -3,8 +3,6 @@
 # Uwaga: Ollama uruchamiana jest zwykle na hoscie (dostep do GPU).
 # Kontenery komunikuja sie z nia przez host.docker.internal.
 # ======================================================================
-version: "3.9"
-
 services:
   backend:
     build: ./backend
@@ -15,7 +13,8 @@ services:
       - ./backend:/app
       - ./data:/app/data
     depends_on:
-      - qdrant
+      postgres:
+        condition: service_healthy
     # command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
@@ -29,12 +28,21 @@ services:
       - backend
     # command: npm run dev -- --host
 
-  qdrant:
-    image: qdrant/qdrant:latest
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rag}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag}
+      POSTGRES_DB: ${POSTGRES_DB:-rag_benchmark}
     ports:
-      - "6333:6333"
+      - "5432:5432"
     volumes:
-      - ./qdrant_storage:/qdrant/storage
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   # Ollama — opcjonalnie w kontenerze. Domyslnie uruchamiana na hoscie,
   # aby miec bezposredni dostep do GPU. Odkomentuj w razie potrzeby.
@@ -44,3 +52,6 @@ services:
   #     - "11434:11434"
   #   volumes:
   #     - ./ollama_data:/root/.ollama
+
+volumes:
+  pgdata:

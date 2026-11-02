@@ -1,4 +1,4 @@
-"""Modele bazodanowe (SQLModel) — metadane i wyniki zapisywane w SQLite.
+"""Modele bazodanowe (SQLModel) — metadane i wyniki zapisywane w PostgreSQL (+ wektory w pgvector).
 
 Szkielet — przechowuje: zbiory danych, definicje eksperymentow, konfiguracje,
 szczegolowe wyniki ewaluacji oraz historie zapytan Playground.
@@ -10,6 +10,8 @@ Planowane tabele:
   - Experiment(id, dataset_id, status, created_at)
   - RagConfigRow(id, experiment_id, label, chunking, retrieval, top_k, reranking_enabled, ...)
   - QuestionResultRow(id, experiment_id, config_label, question_id, generated_answer, metryki...)
+  - ChunkRow(id, collection_id, document, text, position, embedding: vector(768))
+      collection_id = konfiguracja w eksperymencie; ON DELETE CASCADE z RagConfigRow
   - PlaygroundQueryLog(id, experiment_id, config_label, question, answer, created_at)
 """
 
