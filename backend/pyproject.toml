@@ -18,6 +18,7 @@ dependencies = [
     "sentence-transformers",
     "torch",
     "pypdf",
+    "litellm>=1.106.6",
 ]
 
 [dependency-groups]

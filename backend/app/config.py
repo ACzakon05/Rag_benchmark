@@ -31,15 +31,13 @@ class Settings(BaseSettings):
 
     upload_dir: Path = REPO_ROOT / "data" / "uploads"
 
-    llm_provider: str = "ollama"
     ollama_base_url: str = "http://localhost:11434"
-    generation_model: str = "qwen3:8b"
-    judge_model: str = "qwen3:8b"
-    embedding_model: str = "nomic-embed-text"
+    # LiteLLM model ids: the prefix selects the provider (ollama_chat/, openai/, anthropic/, ...).
+    # API keys are read by LiteLLM straight from the environment (OPENAI_API_KEY, ...).
+    generation_model: str = "ollama_chat/qwen3:8b"
+    judge_model: str = "ollama_chat/qwen3:8b"
+    embedding_model: str = "ollama/nomic-embed-text"
     reranker_model: str = "BAAI/bge-reranker-base"
-
-    openai_api_key: SecretStr | None = None
-    openai_base_url: str | None = None
 
     max_concurrent_llm_calls: int = 1
     judge_temperature: float = 0.0
