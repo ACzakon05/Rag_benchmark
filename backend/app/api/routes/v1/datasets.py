@@ -9,10 +9,10 @@ from fastapi import APIRouter
 
 from app.schemas.dataset import DatasetSummary
 
-router = APIRouter(prefix="/datasets", tags=["datasets"])
+router = APIRouter()
 
 
-@router.post("", response_model=DatasetSummary)
+@router.post("/datasets", response_model=DatasetSummary)
 def upload_dataset():
     """Wgranie dokumentow (.txt/.md/.pdf) + pliku testowego (.json/.csv).
 
@@ -22,7 +22,7 @@ def upload_dataset():
     raise NotImplementedError
 
 
-@router.get("/{dataset_id}", response_model=DatasetSummary)
+@router.get("/datasets/{dataset_id}", response_model=DatasetSummary)
 def get_dataset(dataset_id: str):
     """Podsumowanie wgranego zbioru."""
     raise NotImplementedError

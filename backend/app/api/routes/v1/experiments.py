@@ -9,16 +9,16 @@ from fastapi import APIRouter
 
 from app.schemas.experiment import ExperimentConfig, ExperimentProgress
 
-router = APIRouter(prefix="/experiments", tags=["experiments"])
+router = APIRouter()
 
 
-@router.post("", response_model=ExperimentProgress, status_code=202)
+@router.post("/experiments", response_model=ExperimentProgress, status_code=202)
 def create_experiment(config: ExperimentConfig):
     """Tworzy eksperyment (2-4 konfiguracje) i startuje zadanie w tle."""
     raise NotImplementedError
 
 
-@router.get("/{experiment_id}/progress", response_model=ExperimentProgress)
+@router.get("/experiments/{experiment_id}/progress", response_model=ExperimentProgress)
 def get_progress(experiment_id: str):
     """Aktualny postep (np. 'Konfiguracja 2/4, pytanie 6/15')."""
     raise NotImplementedError

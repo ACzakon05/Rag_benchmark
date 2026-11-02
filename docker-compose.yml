@@ -14,12 +14,23 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
       - ./data:/app/data
     depends_on:
       postgres:
         condition: service_healthy
-    # command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/app
+          target: /app/app
+        - action: sync+restart
+          path: ./backend/migrations
+          target: /app/migrations
+        - action: sync
+          path: ./backend/scripts
+          target: /app/scripts
+        - action: rebuild
+          path: ./backend/uv.lock
 
   frontend:
     build: ./frontend

@@ -1,26 +1,24 @@
-"""Punkt wejscia aplikacji FastAPI.
-
-Szkielet — montuje routery i konfiguruje CORS. Bez logiki biznesowej.
-Wlasciciel: Osoba 1 (Architekt Backendu & Orkiestracji).
-"""
-
-from __future__ import annotations
-
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
-# from fastapi.middleware.cors import CORSMiddleware
-# from app.api.routes import datasets, experiments, results, playground
+from app.api import head_router
+from app.config import settings
+from app.database import DbSession
 
-app = FastAPI(title="RAG Benchmark & Playground", version="0.1.0")
+api = FastAPI(title="RAG Benchmark & Playground", version="0.1.0")
 
-# TODO (Etap 1): CORS, rejestracja routerow, inicjalizacja DB, lifespan.
-# app.include_router(datasets.router, prefix="/api/v1")
-# app.include_router(experiments.router, prefix="/api/v1")
-# app.include_router(results.router, prefix="/api/v1")
-# app.include_router(playground.router, prefix="/api/v1")
+api.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+api.include_router(head_router)
 
 
-@app.get("/health")
-def health() -> dict:
-    """Prosty health-check (do walking skeleton, Etap 2)."""
-    raise NotImplementedError
+@api.get("/health")
+async def health(db: DbSession) -> dict[str, str]:
+    db.execute(text("SELECT 1"))
+    return {"status": "ok"}
