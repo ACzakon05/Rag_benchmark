@@ -9,10 +9,10 @@ from fastapi import APIRouter
 
 from app.schemas.playground import PlaygroundQuery, PlaygroundResponse
 
-router = APIRouter(prefix="/playground", tags=["playground"])
+router = APIRouter()
 
 
-@router.post("/ask", response_model=PlaygroundResponse)
+@router.post("/playground/ask", response_model=PlaygroundResponse)
 def ask(query: PlaygroundQuery):
     """Pytanie na zywo do wybranej konfiguracji (gotowy indeks, bez reindeksacji)."""
     raise NotImplementedError
