@@ -52,7 +52,8 @@ czacie (**Playground**).
 │       ├── config.py         # ustawienia z .env
 │       ├── api/routes/       # datasets, experiments, results, playground
 │       ├── schemas/          # kontrakty Pydantic
-│       ├── db/               # PostgreSQL + pgvector, modele
+│       ├── database.py       # silnik, BaseDbModel, sesja
+│       ├── models/           # modele SQLAlchemy
 │       ├── ingestion/        # [Osoba 3] parsowanie + chunking
 │       ├── retrieval/        # [Osoba 4] indeks, wyszukiwanie, reranking
 │       ├── runner/           # [Osoba 1] orkiestracja + playground
