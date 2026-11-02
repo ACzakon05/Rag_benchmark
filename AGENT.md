@@ -45,7 +45,10 @@ Wynikają z ryzyk opisanych w specyfikacji (sekcja 9) — nie łam ich bez uzgod
 
 ## Konwencje
 
-- Python 3.11+, FastAPI, SQLModel. Formatowanie/lint: `ruff`. Typy: `mypy`.
+- Python 3.13, FastAPI, SQLAlchemy 2.0. Formatowanie/lint: `ruff`. Typy: `mypy`.
+- **Migracji nigdy nie piszemy ręcznie.** Zmiana schematu = zmiana modeli w `backend/app/models/`,
+  potem `uv run alembic revision --autogenerate -m "..."`. Wygenerowany plik przeglądamy
+  i poprawiamy tylko to, czego autogenerate nie wykrywa (np. `CREATE EXTENSION`, migracje danych).
 - Komentarze i docstringi: zwięźle, tylko gdy wyjaśniają "dlaczego".
 - Konfiguracja wyłącznie przez `.env` (wzór: `.env.example`) — bez hardkodowania modeli/URL.
 - Nie commituj danych użytkownika ani baz (patrz `.gitignore`): `data/`, `pgdata/`.

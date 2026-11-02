@@ -16,7 +16,7 @@ Embedding = Annotated[list[float], mapped_column(Vector(settings.embedding_dim))
 
 
 def _fk(target: str, ondelete: str = "CASCADE") -> MappedColumn:
-    return mapped_column(ForeignKey(f"{target}.id", ondelete=ondelete), index=True)
+    return mapped_column(ForeignKey(f"{target}.id", ondelete=ondelete))
 
 
 FKDataset = Annotated[UUID, _fk("dataset")]
