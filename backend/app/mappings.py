@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import ForeignKey, String
-from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import MappedColumn, mapped_column
 
 from app.config import settings
 
@@ -15,14 +15,20 @@ str_255 = Annotated[str, mapped_column(String(255))]
 Embedding = Annotated[list[float], mapped_column(Vector(settings.embedding_dim))]
 
 
-def _fk(target: str) -> object:
-    return mapped_column(ForeignKey(f"{target}.id", ondelete="CASCADE"), index=True)
+def _fk(target: str, ondelete: str = "CASCADE") -> MappedColumn:
+    return mapped_column(ForeignKey(f"{target}.id", ondelete=ondelete), index=True)
 
 
 FKDataset = Annotated[UUID, _fk("dataset")]
 FKDocument = Annotated[UUID, _fk("document")]
-FKTestQuestion = Annotated[UUID, _fk("test_question")]
+FKQuestion = Annotated[UUID, _fk("question")]
 FKExperiment = Annotated[UUID, _fk("experiment")]
 FKRagConfig = Annotated[UUID, _fk("rag_config")]
+FKCollection = Annotated[UUID, _fk("collection")]
 FKQuestionResult = Annotated[UUID, _fk("question_result")]
-FKChunk = Annotated[UUID, _fk("chunk")]
+
+# Collections and chunks are shared between experiments, so references to them must not
+# cascade: deleting one while results still point at it should fail, not wipe the results.
+# NO ACTION rather than RESTRICT, so a dataset delete cascading to both sides still succeeds.
+FKCollectionRef = Annotated[UUID, _fk("collection", ondelete="NO ACTION")]
+FKChunkRef = Annotated[UUID, _fk("chunk", ondelete="NO ACTION")]
