@@ -116,19 +116,83 @@ def upload_dataset(documents, testset) -> dict:
 
     return result
 
+
+
+def _request_json(method: str, path: str, **kwargs) -> dict:
+    """makes an HTTP request and returns a JSON response."""
+
+    try:
+        response = requests.request(
+            method,
+            f"{API_BASE_URL}{path}",
+            timeout=REQUEST_TIMEOUT,
+            **kwargs
+        )
+
+    except requests.Timeout as error:
+        raise APIClientError(
+            "The backend did not respond in time."
+        ) from error
+
+    except requests.ConnectionError as error:
+        raise APIClientError(
+            f"Cannot connect to backend at {API_BASE_URL}."
+        ) from error
+
+    except requests.RequestException as error:
+        raise APIClientError(str(error)) from error
+
+    if not response.ok:
+        raise APIClientError(
+            f"HTTP {response.status_code}: "
+            f"{_get_error_detail(response)}"
+        )
+
+    try:
+        result = response.json()
+    except ValueError as error:
+        raise APIClientError(
+            "Backend returned an invalid JSON response."
+        ) from error
+
+    if not isinstance(result, dict):
+        raise APIClientError(
+            "Unexpected response format from backend."
+        )
+
+    return result
+
+
+
+
+
 def create_experiment(config: dict) -> dict:
-    """POST /experiments"""
-    raise NotImplementedError
+    """POST /experiments — tworzy i uruchamia eksperyment."""
+
+    return _request_json(
+        "POST",
+        "/experiments",
+        json=config
+    )
 
 
 def get_progress(experiment_id: str) -> dict:
-    """GET /experiments/{id}/progress"""
-    raise NotImplementedError
+    """GET /experiments/{id}/progress — pobiera postęp."""
+
+    return _request_json(
+        "GET",
+        f"/experiments/{experiment_id}/progress"
+    )
 
 
 def get_results(experiment_id: str) -> dict:
-    """GET /experiments/{id}/results"""
-    raise NotImplementedError
+    """GET /experiments/{id}/results — pobiera wyniki."""
+
+    return _request_json(
+        "GET",
+        f"/experiments/{experiment_id}/results"
+    )
+
 
 
 def ask_playground(experiment_id: str, config_label: str, question: str) -> dict:
