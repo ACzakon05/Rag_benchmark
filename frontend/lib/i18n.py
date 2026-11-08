@@ -50,6 +50,12 @@ TRANSLATIONS = {
             "to see the dataset summary."
         ),
 
+        "dataset.upload_to_backend": "Send dataset to backend",
+        "dataset.sending": "Uploading dataset...",
+        "dataset.uploaded": "Dataset successfully saved on backend.",
+        "dataset.backend_id": "Dataset ID: {dataset_id}",
+        "dataset.upload_error": "Dataset upload failed: {error}",
+
 
 
 
@@ -101,6 +107,12 @@ TRANSLATIONS = {
             "Wybierz dokumenty oraz poprawny plik testowy, "
             "aby zobaczyć podsumowanie."
         ),
+
+        "dataset.upload_to_backend": "Wyślij zbiór do backendu",
+        "dataset.sending": "Wysyłanie zbioru danych...",
+        "dataset.uploaded": "Zbiór danych został zapisany w backendzie.",
+        "dataset.backend_id": "ID zbioru danych: {dataset_id}",
+        "dataset.upload_error": "Nie udało się wysłać zbioru: {error}",
     }
 }
 

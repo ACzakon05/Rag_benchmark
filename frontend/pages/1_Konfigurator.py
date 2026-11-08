@@ -1,4 +1,5 @@
 
+from lib.api_client import upload_dataset, APIClientError
 import json
 import hashlib
 from io import BytesIO
@@ -55,6 +56,19 @@ def deduplicate_files(files):
 
     return unique, duplicates
 
+def calculate_dataset_fingerprint(files, testset):
+    digest = hashlib.sha256()
+
+    for file in files:
+        digest.update(file.name.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(file.getvalue())
+
+    digest.update(testset.name.encode("utf-8"))
+    digest.update(b"\0")
+    digest.update(testset.getvalue())
+
+    return digest.hexdigest()
 
 documents, duplicates = deduplicate_files(uploaded or [])
 
@@ -232,3 +246,85 @@ if documents and questions_df is not None:
 
 else:
     st.info(t("summary.waiting"))
+
+
+
+
+# --------------------------------------------------
+# 4. SEND DATASET TO BACKEND
+# --------------------------------------------------
+
+valid_dataset = (
+    bool(documents)
+    and testset is not None
+    and questions_df is not None
+)
+
+current_fingerprint = (
+    calculate_dataset_fingerprint(documents, testset)
+    if valid_dataset
+    else None
+)
+
+# Invalidate the previous backend dataset if files changed.
+if st.session_state.get("uploaded_dataset_fingerprint") != current_fingerprint:
+    st.session_state.pop("dataset_id", None)
+    st.session_state.pop("backend_dataset_summary", None)
+
+    st.session_state["uploaded_dataset_fingerprint"] = current_fingerprint
+
+
+if valid_dataset:
+
+    backend_summary = st.session_state.get("backend_dataset_summary")
+
+    if backend_summary is None:
+
+        if st.button(
+            t("dataset.upload_to_backend"),
+            type="primary",
+            key="send_dataset_to_backend"
+        ):
+
+            try:
+                with st.spinner(t("dataset.sending")):
+                    backend_summary = upload_dataset(
+                        documents,
+                        testset
+                    )
+
+                st.session_state["dataset_id"] = (
+                    backend_summary["dataset_id"]
+                )
+
+                st.session_state["backend_dataset_summary"] = (
+                    backend_summary
+                )
+
+                st.success(t("dataset.uploaded"))
+
+                st.caption(
+                    t(
+                        "dataset.backend_id",
+                        dataset_id=backend_summary["dataset_id"]
+                    )
+                )
+
+            except APIClientError as error:
+                st.error(
+                    t(
+                        "dataset.upload_error",
+                        error=str(error)
+                    )
+                )
+
+    else:
+        st.success(t("dataset.uploaded"))
+
+        st.caption(
+            t(
+                "dataset.backend_id",
+                dataset_id=backend_summary["dataset_id"]
+            )
+        )
+
