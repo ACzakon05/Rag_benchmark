@@ -5,11 +5,11 @@ lokalnym serwerem modeli (Ollama). Szczegóły w specyfikacji produktowej (sekcj
 
 ## Komponenty i podział odpowiedzialności (6 osób)
 
-Zgodnie z sekcją 8 specyfikacji produktowej (`Rag benchmark_*.txt`):
+Zgodnie z sekcją 8 specyfikacji produktowej (`SPECIFICATION.md`):
 
 | # | Rola w zespole | Katalog / Pliki | Właściciel | Zakres odpowiedzialności | Punkty styku |
 |---|----------------|-----------------|------------|---------------------------|--------------|
-| 1 | **Architekt Backendu & Orkiestracji** | `backend/app/api/`<br>`backend/app/runner/`<br>`backend/app/database.py`<br>`backend/app/models/`<br>`backend/app/llm/` | **Osoba 1** | Szkielet FastAPI, baza PostgreSQL + pgvector (schemat, sesje), kolejkowanie zadań eksperymentu, ujednolicony klient LLM (Ollama: qwen3:8b), zliczanie czasów i tokenów, endpointy dla modułu Playground. | Wystawia REST API dla Osób 2 i 6; wywołuje moduły Osób 3, 4 i 5. |
+| 1 | **Architekt Backendu & Orkiestracji** | `backend/app/api/`<br>`backend/app/runner/`<br>`backend/app/services/`<br>`backend/app/repositories/`<br>`backend/app/database.py`<br>`backend/app/models/`<br>`backend/migrations/`<br>`backend/app/celery_app.py`<br>`backend/app/llm/` | **Osoba 1** | Szkielet FastAPI (trasy `v1`, warstwy `services/` i `repositories/`), baza PostgreSQL + pgvector (schemat, migracje Alembic, sesje), kolejkowanie zadań eksperymentu (Celery + Redis), ujednolicony klient LLM (Ollama: qwen3:8b), zliczanie czasów i tokenów, endpointy dla modułu Playground. | Wystawia REST API dla Osób 2 i 6; wywołuje moduły Osób 3, 4 i 5. |
 | 2 | **Frontend Developer – Benchmark UI** | `frontend/pages/1_Konfigurator.py`<br>`frontend/pages/2_Dashboard.py` *(widok makro)*<br>`frontend/lib/api_client.py` | **Osoba 2** | Widok wgrywania plików i pytań testowych, formularz wyboru konfiguracji (A, B, C, D), pasek postępu eksperymentu, główna tabela porównawcza metryk. | Korzysta z REST API wystawionego przez Osobę 1. |
 | 3 | **Inżynier Przetwarzania Danych & Datasetu** | `backend/app/ingestion/`<br>`datasets/demo/` | **Osoba 3** | Ekstrakcja tekstu z PDF/MD/TXT, chunker stałej liczby tokenów (z overlapem), chunker strukturalny (nagłówki/akapity). Przygotowanie wzorcowego zbioru dokumentów i pytań testowych. | Dostarcza funkcję:<br>`chunk_documents(files, config) -> list[DocumentChunk]`. |
 | 4 | **Inżynier Wyszukiwania i Rerankingu** | `backend/app/retrieval/` | **Osoba 4** | Zapis/wyszukiwanie wektorów w pgvector, integracja modelu `nomic-embed-text`, indeksowanie BM25, wyszukiwanie hybrydowe (RRF) oraz integracja modelu `BAAI/bge-reranker-base`. | Dostarcza interfejs:<br>`index_chunks(collection_id, chunks)` oraz `search(collection_id, query, config) -> list[ScoredChunk]`. |
@@ -30,8 +30,15 @@ Zgodnie z sekcją 8 specyfikacji produktowej (`Rag benchmark_*.txt`):
 
 ## Kluczowe decyzje projektowe
 
-- **Wzorzec Adaptera dla modeli** (`backend/app/llm/client.py`): ujednolicony interfejs
-  kompatybilny z OpenAI API → przejście na komercyjne API bez zmian w logice RAG/eval.
+- **Wzorzec Adaptera dla modeli** (`backend/app/llm/client.py`, [ADR-0003](adr/0003-litellm-client.md)):
+  `LLMClient` i `EmbeddingClient` opakowują LiteLLM → przejście na komercyjne API przez zmianę
+  identyfikatora modelu w `.env`, bez zmian w logice RAG/eval.
+- **Zadania w tle: Celery + Redis** ([ADR-0005](adr/0005-celery-redis.md)) — osobny proces `worker`,
+  jeden eksperyment naraz; stan i wyniki tylko w PostgreSQL.
+- **SQLAlchemy + Alembic** ([ADR-0002](adr/0002-sqlalchemy-alembic.md)) — każda zmiana schematu
+  przez migrację.
+- **Tryb fake** (`FAKE_RUNNER=true`) — dopóki ingestion/retrieval/evaluation nie są gotowe,
+  `runner/fake_runner.py` zapisuje wiarygodne, wymyślone wyniki przez te same tabele.
 - **Sekwencyjne wywołania LLM** dla modeli lokalnych (`MAX_CONCURRENT_LLM_CALLS=1`) —
   ochrona VRAM (ryzyko #1 w specyfikacji).
 - **Trafność po treści cytatu, nie po `chunk_id`** — różne strategie chunkingu dają różne
@@ -59,7 +66,12 @@ retrieval.search(collection_id: str, query: str, config: RagConfig) -> list[Scor
 # Osoba 5 (Evaluation):
 evaluation.evaluate(question: str, ground_truth: str, retrieved_chunks: list[ScoredChunk], answer: str) -> EvaluationMetrics
 
-# Osoba 1 (LLM Client):
-llm.LLMClient.generate(prompt: str, system: str | None) -> LLMResponse
-llm.LLMClient.generate_json(prompt: str, schema: dict, system: str | None) -> dict
+# Osoba 1 (LLM Client) — `app/llm/client.py`:
+LLMClient.generate(prompt: str, *, system: str | None = None) -> LLMResponse   # text, prompt_tokens, completion_tokens
+LLMClient.generate_json(prompt: str, schema: type[BaseModel], *, system: str | None = None) -> tuple[BaseModel, LLMResponse]
+EmbeddingClient.embed(texts: list[str]) -> list[list[float]]
 ```
+
+Uwagi do kontraktów ingestion → retrieval (tabela `chunk`): `DocumentChunk.chunk_id` i `document_id`
+muszą być UUID-ami w postaci tekstowej, a `document_id` — istniejącym `document.id`
+(klucz obcy). `collection_id` to UUID z tabeli `collection`.

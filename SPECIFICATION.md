@@ -1,5 +1,10 @@
 # Specyfikacja Produktowa MVP: Projekt 2.1 — RAG Benchmark & Playground
 
+> **Uwaga:** to dokument wyjściowy. Część decyzji technicznych została później zmieniona w
+> [ADR-ach](docs/adr/README.md) (ADR wygrywa ze specyfikacją): zamiast **SQLite + SQLModel + Qdrant**
+> używamy **PostgreSQL + pgvector + SQLAlchemy/Alembic**, zadania w tle to **Celery + Redis**,
+> a klient LLM to **LiteLLM**. Wzmianki o SQLite/SQLModel/Qdrant poniżej są historyczne.
+
 ## 1. Podsumowanie projektu
 
 * **Czym jest ten projekt?** Narzędzie typu benchmark, evaluation & playground suite dla systemów RAG (Retrieval-Augmented Generation), działające domyślnie w oparciu o darmowe, lokalne modele AI (z architekturą otwartą na podpięcie komercyjnych API w przyszłości). Pozwala na zautomatyzowane uruchomienie kilku wariantów konfiguracji RAG na tym samym zbiorze dokumentów i pytań testowych, porównanie ich pod kątem jakości wyszukiwania, jakości odpowiedzi oraz wydajności, a następnie natychmiastowe korzystanie ze zwycięskiej konfiguracji w trybie interaktywnego czatu (Playground).

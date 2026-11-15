@@ -28,11 +28,13 @@ Why:
 
 ## Consequences
 
-- Vectors live in the chunks table (`vector(768)` for `nomic-embed-text`). A "collection"
-  is now just a `collection_id` column, so Person 4's interface stays the same:
-  `index_chunks(collection_id, chunks)` / `search(collection_id, query, config)`.
+- Vectors live in the chunks table (`vector(768)` for `nomic-embed-text`). A chunk points at
+  a `collection` row via `collection_id` (see ADR-0004), so Person 4's interface stays the
+  same: `index_chunks(collection_id, chunks)` / `search(collection_id, query, config)`.
 - Chunks, results and metadata can be joined directly (useful for the per-question view),
-  and foreign keys with `ON DELETE CASCADE` keep everything consistent.
+  and foreign keys keep everything consistent: `ON DELETE CASCADE` from a dataset down to its
+  documents, questions and collections, while references to collections and chunks from
+  configs and results are `NO ACTION` (deferred), since collections are shared (ADR-0004).
 - Postgres has no native BM25 (`ts_rank` isn't BM25), so **BM25 stays in `rank-bm25`**,
   built in memory from the collection's chunks loaded from the DB. ParadeDB `pg_search`
   is an option later if needed.
