@@ -9,8 +9,10 @@ porównuje je pod kątem **jakości wyszukiwania, jakości odpowiedzi i wydajno�
 a następnie pozwala od razu korzystać ze zwycięskiej konfiguracji w interaktywnym
 czacie (**Playground**).
 
-> Status: **szkielet projektu** (sucha architektura, bez implementacji). Wypełnianie
-> modułów zgodnie z `docs/` i podziałem pracy z sekcji 8 specyfikacji.
+> Status: **działa szkielet end-to-end na danych fake** — API, baza (PostgreSQL + pgvector),
+> kolejka zadań (Celery + Redis) i `fake_runner` zapisujący wymyślone wyniki. Moduły RAG
+> (`ingestion`, `retrieval`, `evaluation`) i orchestrator są jeszcze do implementacji
+> (`FAKE_RUNNER=true` w `.env`), frontend Streamlit to na razie szkielet.
 
 ## Co porównujemy
 
@@ -26,11 +28,13 @@ czacie (**Playground**).
 | Warstwa | Technologia |
 |---------|-------------|
 | Frontend | **Streamlit** (Python) |
-| Backend | FastAPI (Python 3.11+), SQLModel |
+| Backend | FastAPI (Python 3.13), SQLAlchemy 2.0 + Alembic, zarządzanie zależnościami: `uv` |
 | Baza danych | PostgreSQL 17 + pgvector (metadane, wyniki i wektory) |
+| Zadania w tle | Celery + Redis (worker przetwarza jeden eksperyment naraz) |
+| Klient modeli | LiteLLM (adapter w `backend/app/llm/`) |
 | Wyszukiwanie leksykalne | `rank-bm25` |
 | Modele (lokalne) | Ollama: `qwen3:8b` (generacja + sędzia), `nomic-embed-text` (embeddingi); `BAAI/bge-reranker-base` (Sentence-Transformers) |
-| Infrastruktura | Docker + Docker Compose |
+| Infrastruktura | Docker + Docker Compose (`make` / `just` jako skróty) |
 
 > Frontend wybrany jako Streamlit zamiast React (zespół pracuje w Pythonie).
 
@@ -40,25 +44,31 @@ czacie (**Playground**).
 .
 ├── README.md
 ├── AGENT.md                  # przewodnik dla agentów AI pracujących w repo
-├── docker-compose.yml
+├── SPECIFICATION.md          # specyfikacja produktowa (źródło prawdy dla zakresu)
+├── docker-compose.yml        # backend, worker, frontend, postgres, redis
 ├── .env.example
+├── Makefile / justfile       # skróty: up, migrate, test, lint
 ├── docs/
 │   ├── architecture.md       # komponenty, przepływ danych, decyzje
-│   ├── api.md                # propozycja endpointów REST (v1)
-│   └── data-contracts.md     # kontrakty danych (Etap 1)
+│   ├── api.md                # endpointy REST (v1)
+│   ├── data-contracts.md     # kontrakty danych (Etap 1)
+│   └── adr/                  # Architecture Decision Records (ADR wygrywa ze specyfikacją)
 ├── backend/                  # FastAPI + moduły RAG
 │   └── app/
 │       ├── main.py           # punkt wejścia
 │       ├── config.py         # ustawienia z .env
-│       ├── api/routes/       # datasets, experiments, results, playground
+│       ├── api/routes/v1/    # datasets, experiments, results, playground
+│       ├── services/         # logika biznesowa wołana z tras
+│       ├── repositories/     # dostęp do bazy (CRUD)
 │       ├── schemas/          # kontrakty Pydantic
 │       ├── database.py       # silnik, BaseDbModel, sesja
-│       ├── models/           # modele SQLAlchemy
+│       ├── models/           # modele SQLAlchemy (+ migracje w backend/migrations/)
+│       ├── celery_app.py     # kolejka zadań
 │       ├── ingestion/        # [Osoba 3] parsowanie + chunking
 │       ├── retrieval/        # [Osoba 4] indeks, wyszukiwanie, reranking
-│       ├── runner/           # [Osoba 1] orkiestracja + playground
+│       ├── runner/           # [Osoba 1] orkiestracja + playground (+ fake_runner)
 │       ├── evaluation/       # [Osoba 5] metryki + LLM-as-a-Judge
-│       └── llm/              # adapter klienta LLM (Ollama/OpenAI)
+│       └── llm/              # adapter klienta LLM i embeddingów (LiteLLM)
 ├── frontend/                 # [Osoba 2 / 6] Streamlit (strony: Konfigurator, Dashboard, Playground)
 └── datasets/demo/            # przykładowy zbiór pokazowy
 ```
@@ -75,9 +85,12 @@ ollama pull nomic-embed-text
 # 2. Konfiguracja
 cp .env.example .env
 
-# 3. Start całości
-docker compose up --build
+# 3. Start całości (migracje stosują się przy starcie backendu)
+make up          # lub: docker compose up --build
 ```
+
+Przydatne: `make migrate`, `make create_migration m="opis"`, `make test`, `make lint`
+(odpowiedniki w `justfile`). Backend lokalnie: `cd backend && uv sync && uv run fastapi dev app/main.py`.
 
 - Frontend (Streamlit): http://localhost:8501
 - Backend (Swagger): http://localhost:8000/docs
@@ -85,7 +98,7 @@ docker compose up --build
 ## Podział pracy
 
 Mapowanie osób na moduły: patrz `docs/architecture.md` i sekcja 8 specyfikacji
-produktowej (`Rag benchmark_*.txt`).
+produktowej (`SPECIFICATION.md`).
 
 ## Plan implementacji (skrót)
 
