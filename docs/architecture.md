@@ -62,6 +62,8 @@ ingestion.chunk_documents(files: list[str], config: RagConfig) -> list[DocumentC
 # Osoba 4 (Retrieval):
 retrieval.index_chunks(collection_id: str, chunks: list[DocumentChunk]) -> None
 retrieval.search(collection_id: str, query: str, config: RagConfig) -> list[ScoredChunk]
+retrieval.warm_up(config: RagConfig) -> None   # ładuje modele przed pętlą pytań (czasy benchmarku)
+# import: from app.retrieval.retriever import index_chunks, search, warm_up
 
 # Osoba 5 (Evaluation):
 evaluation.evaluate(question: str, ground_truth: str, retrieved_chunks: list[ScoredChunk], answer: str) -> EvaluationMetrics
@@ -75,3 +77,32 @@ EmbeddingClient.embed(texts: list[str]) -> list[list[float]]
 Uwagi do kontraktów ingestion → retrieval (tabela `chunk`): `DocumentChunk.chunk_id` i `document_id`
 muszą być UUID-ami w postaci tekstowej, a `document_id` — istniejącym `document.id`
 (klucz obcy). `collection_id` to UUID z tabeli `collection`.
+
+## Moduł retrieval (Osoba 4)
+
+Publiczne wejście to `retrieval/retriever.py` (fasada), a logika jest rozdzielona na pliki:
+
+| Plik | Odpowiedzialność |
+|---|---|
+| `retriever.py` | `search`, `warm_up`, re-eksport `index_chunks` |
+| `indexing.py` | `index_chunks`: embedding w paczkach + zapis do tabeli `chunk` (jedna transakcja) |
+| `embedding.py` | embeddingi dokumentów i zapytań (prefiksy `nomic-embed-text`, walidacja wymiaru) |
+| `dense.py` | wyszukiwanie wektorowe w pgvector (odległość kosinusowa, dokładne, bez indeksu ANN) |
+| `bm25.py` | BM25 (`rank-bm25`) budowany w pamięci z chunków kolekcji, cache per kolekcja i proces |
+| `fusion.py` | Reciprocal Rank Fusion (`k=60`) |
+| `reranker.py` | cross-encoder `bge-reranker`, ładowany leniwie (raz na proces) |
+| `common.py` | konwersja wiersza `Chunk` na `DocumentChunk` |
+
+Przepływ `search(collection_id, query, config)`:
+
+1. Wielkość puli kandydatów: `top_k`, a dla `hybrid` lub włączonego rerankingu `4 × top_k`.
+2. `dense`: tylko wyszukiwanie wektorowe. `hybrid`: dense + BM25 łączone przez RRF.
+3. Reranking (jeśli włączony) przeszeregowuje pulę i przycina do `top_k`.
+
+`ScoredChunk.score` ma różną skalę zależnie od trybu (podobieństwo kosinusowe, suma RRF
+rzędu 0,01–0,03, ocena rerankera 0–1), więc nie porównuje się wyników między trybami; liczy
+się kolejność (`rank`). `contains_expected_snippet` wypełnia evaluation.
+
+`index_chunks` i `search` same otwierają sesję bazy (`SessionLocal`), a pomijanie kolekcji, które
+mają już chunki, należy do orchestratora. Cache BM25 jest per proces, więc worker (benchmark)
+i backend (Playground) budują go niezależnie. Decyzje projektowe: [ADR-0006](adr/0006-retrieval-design.md).

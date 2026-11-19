@@ -10,8 +10,9 @@ a następnie pozwala od razu korzystać ze zwycięskiej konfiguracji w interakty
 czacie (**Playground**).
 
 > Status: **działa szkielet end-to-end na danych fake** — API, baza (PostgreSQL + pgvector),
-> kolejka zadań (Celery + Redis) i `fake_runner` zapisujący wymyślone wyniki. Moduły RAG
-> (`ingestion`, `retrieval`, `evaluation`) i orchestrator są jeszcze do implementacji
+> kolejka zadań (Celery + Redis) i `fake_runner` zapisujący wymyślone wyniki. Moduł
+> `retrieval` jest zaimplementowany (dense, BM25, hybrid z RRF, reranking). Moduły
+> `ingestion` i `evaluation` oraz prawdziwy orchestrator są jeszcze do implementacji
 > (`FAKE_RUNNER=true` w `.env`), frontend Streamlit to na razie szkielet.
 
 ## Co porównujemy
@@ -65,7 +66,7 @@ czacie (**Playground**).
 │       ├── models/           # modele SQLAlchemy (+ migracje w backend/migrations/)
 │       ├── celery_app.py     # kolejka zadań
 │       ├── ingestion/        # [Osoba 3] parsowanie + chunking
-│       ├── retrieval/        # [Osoba 4] indeks, wyszukiwanie, reranking
+│       ├── retrieval/        # [Osoba 4] indeksowanie, dense/BM25/RRF, reranking
 │       ├── runner/           # [Osoba 1] orkiestracja + playground (+ fake_runner)
 │       ├── evaluation/       # [Osoba 5] metryki + LLM-as-a-Judge
 │       └── llm/              # adapter klienta LLM i embeddingów (LiteLLM)
