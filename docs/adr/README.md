@@ -11,3 +11,4 @@ add a new ADR rather than rewriting an old one.
 - [0003 - LiteLLM as the LLM client library](0003-litellm-client.md)
 - [0004 - Chunk collections shared between configurations](0004-shared-collections.md)
 - [0005 - Celery + Redis for background jobs](0005-celery-redis.md)
+- [0006 - Retrieval design: exact search, in-memory BM25, RRF, lazy reranker](0006-retrieval-design.md)

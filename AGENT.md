@@ -10,8 +10,9 @@ specyfikacja produktowa: plik `SPECIFICATION.md` (oraz `Rag benchmark_*.txt`) w 
 **źródło prawdy** dla zakresu, metryk i decyzji. Czytaj go przed większymi zmianami.
 
 Aktualny stan: **warstwa API / baza / kolejka jest gotowa i działa na danych fake**
-(`FAKE_RUNNER=true`, `runner/fake_runner.py`). Moduły `ingestion`, `retrieval`, `evaluation`,
-prawdziwy `runner/orchestrator.py` i frontend to jeszcze szkielety (`raise NotImplementedError`).
+(`FAKE_RUNNER=true`, `runner/fake_runner.py`). Moduł `retrieval` jest zaimplementowany i
+przetestowany. Moduły `ingestion`, `evaluation`, prawdziwy `runner/orchestrator.py` i frontend
+to jeszcze szkielety (`raise NotImplementedError`).
 Zadaniem jest wypełnianie modułów, nie przebudowa architektury. Gdzie ADR (`docs/adr/`)
 różni się od `SPECIFICATION.md`, wygrywa ADR.
 
@@ -24,7 +25,8 @@ różni się od `SPECIFICATION.md`, wygrywa ADR.
 - `backend/app/models/`, `backend/migrations/` — modele SQLAlchemy i migracje Alembica.
 - `backend/app/celery_app.py`, `backend/app/runner/tasks.py` — kolejka zadań (Celery + Redis).
 - `backend/app/ingestion/` — parsowanie plików i chunking (Osoba 3).
-- `backend/app/retrieval/` — indeksowanie, wyszukiwanie, reranking (Osoba 4).
+- `backend/app/retrieval/` — indeksowanie, wyszukiwanie (dense, BM25, hybrid/RRF), reranking (Osoba 4);
+  wejście publiczne: `retrieval/retriever.py` (patrz `docs/architecture.md`).
 - `backend/app/evaluation/` — Recall@k, MRR, LLM-as-a-Judge (Osoba 5).
 - `backend/app/runner/` — orkiestracja eksperymentu + Playground (Osoba 1).
 - `backend/app/llm/` — adapter klienta LLM i embeddingów (LiteLLM: Ollama / OpenAI / ...).
