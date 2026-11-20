@@ -1,0 +1,5 @@
+Wersja 2.4.0 (marzec 2026) wprowadziła obsługę wyszukiwania hybrydowego w indeksach dokumentów oraz zredukowała opóźnienia zapytań o 28%. Jednocześnie oznaczono flagę --legacy-sync jako przestarzałą (deprecated).
+
+Wersja 2.5.1 (maj 2026) naprawiła wyciek pamięci w workerach przetwarzających pliki PDF większe niż 50 MB oraz dodała zmienną środowiskową KC_MAX_UPLOAD_MB o domyślnej wartości 100.
+
+Wersja 3.0.0 (wrzesień 2026) usunęła całkowicie obsługę protokołu TLS 1.1 oraz flagę --legacy-sync. Klienci korzystający ze starszych agentów muszą zaktualizować narzędzie kc-agent do wersji co najmniej 3.0.2 przed dniem 15 grudnia 2026 roku.

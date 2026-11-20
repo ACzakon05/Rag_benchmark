@@ -1,0 +1,77 @@
+[
+  {
+    "question": "Jakie wymagania musi spełniać hasło do konta pracownika KrakCloud?",
+    "ground_truth_answer": "Hasło musi mieć co najmniej 14 znaków, w tym wielką literę, cyfrę oraz znak specjalny.",
+    "expected_context_snippet": "Hasło do konta firmowego musi zawierać co najmniej 14 znaków, w tym wielką literę, cyfrę oraz znak specjalny."
+  },
+  {
+    "question": "Czy do logowania wieloskładnikowego (MFA) można używać kodów SMS?",
+    "ground_truth_answer": "Nie, kody SMS nie są akceptowane od stycznia 2025 roku; wymagany jest klucz FIDO2 lub aplikacja TOTP.",
+    "expected_context_snippet": "kody SMS nie są akceptowane od stycznia 2025 roku"
+  },
+  {
+    "question": "Jaki jest wymagany czas reakcji zespołu SOC na incydent o kodzie INC-P1?",
+    "ground_truth_answer": "Zespół SOC musi podjąć reakcję w ciągu 15 minut od zgłoszenia, niezależnie od pory dnia.",
+    "expected_context_snippet": "kodem INC-P1 dotyczy wycieku danych klientów lub nieautoryzowanego dostępu do klastrów produkcyjnych. Zespół SOC musi podjąć reakcję w ciągu 15 minut"
+  },
+  {
+    "question": "Co oznacza błąd VPN ERR-AUTH-4032 i jak go rozwiązać?",
+    "ground_truth_answer": "Oznacza wygasły certyfikat klienta WireGuard; należy go odnowić poleceniem kc-vpn renew --force.",
+    "expected_context_snippet": "ERR-AUTH-4032 oznacza wygasły certyfikat klienta WireGuard na stacji roboczej. W takiej sytuacji należy odnowić certyfikat poleceniem"
+  },
+  {
+    "question": "Który dzień tygodnia jest obowiązkowym dniem pracy z biura w Krakowie?",
+    "ground_truth_answer": "Wtorek jest stałym dniem obecności w biurze w Krakowie dla wszystkich zespołów produktowych.",
+    "expected_context_snippet": "wtorek jest stałym dniem obecności w biurze w Krakowie dla wszystkich zespołów produktowych"
+  },
+  {
+    "question": "Ile wynosi dofinansowanie na home office i ile czasu jest na dostarczenie faktury?",
+    "ground_truth_answer": "Jednorazowe dofinansowanie wynosi 2500 PLN brutto (po okresie próbnym), a fakturę VAT trzeba przesłać w ciągu 14 dni od zakupu.",
+    "expected_context_snippet": "dofinansowanie wyposażenia biura domowego w wysokości 2500 PLN brutto. Fakturę VAT należy przesłać do działu księgowości w ciągu 14 dni"
+  },
+  {
+    "question": "Ile płatnych dni szkoleniowych i jaki budżet edukacyjny przysługują pracownikowi rocznie?",
+    "ground_truth_answer": "Pracownik otrzymuje 4 płatne dni robocze rocznie oraz budżet edukacyjny w wysokości 4000 PLN netto.",
+    "expected_context_snippet": "4 płatne dni robocze rocznie na udział w konferencjach branżowych lub przygotowanie do certyfikacji chmurowych oraz roczny budżet edukacyjny w kwocie 4000 PLN netto"
+  },
+  {
+    "question": "Jakie limity zapytań API obowiązują w planie Pro?",
+    "ground_truth_answer": "Plan Pro pozwala na 600 zapytań na minutę oraz 1 000 000 wywołań miesięcznie (z mechanizmem burst do 900 zapytań przez 10 sekund).",
+    "expected_context_snippet": "planie Pro pozwalają na 600 zapytań na minutę oraz 1 000 000 wywołań miesięcznie"
+  },
+  {
+    "question": "Co sygnalizuje kod błędu API KC-5038?",
+    "ground_truth_answer": "Oznacza chwilową niedostępność kolejki indeksowania dokumentów i wymaga ponowienia żądania z wykładniczym odstępem czasu.",
+    "expected_context_snippet": "Kod KC-5038 oznacza chwilową niedostępność kolejki indeksowania dokumentów i wymaga ponowienia żądania z wykładniczym odstępem czasu."
+  },
+  {
+    "question": "Ile razy i w jakich odstępach system ponawia dostarczenie nieudanego webhooka?",
+    "ground_truth_answer": "Łącznie 5 razy w odstępach: 1 minuta, 5 minut, 30 minut, 2 godziny oraz 12 godzin.",
+    "expected_context_snippet": "ponawia dostarczenie webhooka łącznie 5 razy w odstępach: 1 minuta, 5 minut, 30 minut, 2 godziny oraz 12 godzin"
+  },
+  {
+    "question": "Kiedy wykonywane są pełne kopie zapasowe PostgreSQL i jak często archiwizowane są dzienniki WAL?",
+    "ground_truth_answer": "Pełny zrzut wykonywany jest codziennie o 02:30 UTC, a dzienniki WAL są archiwizowane co 5 minut.",
+    "expected_context_snippet": "pełny zrzut wykonywany codziennie o godzinie 02:30 UTC oraz ciągłą archiwizację dzienników WAL co 5 minut"
+  },
+  {
+    "question": "Jakie są wartości RPO i RTO dla kluczowych usług produkcyjnych?",
+    "ground_truth_answer": "Dla usług kluczowych RPO wynosi 5 minut, a RTO wynosi 30 minut.",
+    "expected_context_snippet": "RPO (maksymalna dopuszczalna utrata danych) równe 5 minut oraz RTO (maksymalny czas przywrócenia działania usługi) wynoszące 30 minut"
+  },
+  {
+    "question": "Jaka rekompensata SLA przysługuje przy dostępności poniżej 99,0% i do kiedy należy złożyć wniosek?",
+    "ground_truth_answer": "Rekompensata wynosi 25% miesięcznej opłaty, a wniosek należy zgłosić do 10. dnia kolejnego miesiąca.",
+    "expected_context_snippet": "Przy dostępności poniżej 99,0% w danym miesiącu rekompensata rośnie do 25% miesięcznej opłaty. Wniosek o naliczenie rekompensaty należy zgłosić do 10. dnia kolejnego miesiąca."
+  },
+  {
+    "question": "Jak długo dane klienta są przechowywane po wygaśnięciu umowy?",
+    "ground_truth_answer": "Dane są przechowywane w trybie tylko do odczytu przez 14 dni po wygaśnięciu umowy, a następnie trwale usuwane.",
+    "expected_context_snippet": "Dane klienta są przechowywane w trybie tylko do odczytu przez 14 dni po wygaśnięciu umowy, a następnie trwale usuwane."
+  },
+  {
+    "question": "Co zostało usunięte w wersji 3.0.0 i do jakiej wersji należy zaktualizować narzędzie kc-agent?",
+    "ground_truth_answer": "Usunięto obsługę TLS 1.1 oraz flagę --legacy-sync; narzędzie kc-agent należy zaktualizować co najmniej do wersji 3.0.2 przed 15 grudnia 2026 roku.",
+    "expected_context_snippet": "usunęła całkowicie obsługę protokołu TLS 1.1 oraz flagę --legacy-sync. Klienci korzystający ze starszych agentów muszą zaktualizować narzędzie kc-agent do wersji co najmniej 3.0.2"
+  }
+]
