@@ -1,12 +1,22 @@
-
-from lib.api_client import upload_dataset, APIClientError
-import json
+import csv
 import hashlib
-from io import BytesIO
+import json
+from collections import Counter
+from io import StringIO
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
+from lib.api_client import APIClientError, create_experiment, get_progress, upload_dataset
+from lib.configurator import (
+    CHUNKING_STRATEGIES,
+    MAX_CONFIGS,
+    MIN_CONFIGS,
+    RETRIEVAL_METHODS,
+    build_experiment_payload,
+    get_default_configurations,
+)
 from lib.i18n import t, render_language_selector
 
 
@@ -59,14 +69,9 @@ def deduplicate_files(files):
 def calculate_dataset_fingerprint(files, testset):
     digest = hashlib.sha256()
 
-    for file in files:
-        digest.update(file.name.encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(file.getvalue())
-
-    digest.update(testset.name.encode("utf-8"))
-    digest.update(b"\0")
-    digest.update(testset.getvalue())
+    for file in [*files, testset]:
+        digest.update(json.dumps(file.name).encode("utf-8"))
+        digest.update(hashlib.sha256(file.getvalue()).digest())
 
     return digest.hexdigest()
 
@@ -113,102 +118,53 @@ REQUIRED_FIELDS = [
     "expected_context_snippet"
 ]
 
-questions_df = None
-validation_error = None
+def read_questions(file):
+    content = file.getvalue().decode("utf-8-sig")
+    if Path(file.name).suffix.lower() == ".json":
+        rows = json.loads(content)
+        if not isinstance(rows, list):
+            raise ValueError(t("testset.invalid_type"))
+    else:
+        reader = csv.DictReader(StringIO(content))
+        missing = [field for field in REQUIRED_FIELDS if field not in (reader.fieldnames or [])]
+        if missing:
+            raise ValueError(t("testset.missing_fields", fields=", ".join(missing)))
+        rows = list(reader)
 
-if testset:
-    try:
-        file_content = testset.getvalue()
+    if not rows:
+        raise ValueError(t("testset.empty"))
 
-        if testset.name.endswith(".json"):
-            questions = json.loads(
-                file_content.decode("utf-8")
-            )
-
-            if not isinstance(questions, list):
-                raise ValueError(
-                    t("testset.invalid_type")
-                )
-
-            questions_df = pd.DataFrame(questions)
-
-        else:
-            questions_df = pd.read_csv(
-                BytesIO(file_content)
-            )
-
-        # Check required columns
-        missing_fields = [
-            field for field in REQUIRED_FIELDS
-            if field not in questions_df.columns
-        ]
-
-        if missing_fields:
-            raise ValueError(
-                t(
-                    "testset.missing_fields",
-                    fields=", ".join(missing_fields)
-                )
-            )
-
-        # Check empty values
+    questions = []
+    for number, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            raise ValueError(t("testset.invalid_row", row=number))
+        missing = [field for field in REQUIRED_FIELDS if field not in row or row[field] is None]
+        if missing:
+            raise ValueError(t("testset.row_missing_fields", row=number, fields=", ".join(missing)))
         for field in REQUIRED_FIELDS:
-            values = questions_df[field]
+            if not isinstance(row[field], str) or not row[field].strip():
+                raise ValueError(t("testset.invalid_value", row=number, field=field))
+        questions.append({field: row[field] for field in REQUIRED_FIELDS})
+    return pd.DataFrame(questions)
 
-            invalid = (
-                values.isna()
-                | values.astype(str).str.strip().eq("")
-            )
 
-            if invalid.any():
-                rows = list(
-                    questions_df.index[invalid] + 1
-                )
+duplicate_names = sorted(
+    name for name, count in Counter(Path(doc.name).name for doc in documents).items()
+    if count > 1
+)
+if duplicate_names:
+    st.error(t("documents.duplicate_names", names=", ".join(duplicate_names)))
 
-                raise ValueError(
-                    t(
-                        "testset.empty_values",
-                        field=field,
-                        rows=rows
-                    )
-                )
-
-        if questions_df.empty:
-            raise ValueError(
-                t("testset.empty")
-            )
-
-        st.success(
-            t(
-                "testset.success",
-                count=len(questions_df)
-            )
-        )
-
+questions_df = None
+if testset is not None:
+    try:
+        questions_df = read_questions(testset)
+    except (ValueError, csv.Error) as error:
+        st.error(t("testset.invalid", error=str(error)))
+    else:
+        st.success(t("testset.success", count=len(questions_df)))
         with st.expander(t("testset.preview")):
-            st.dataframe(
-                questions_df,
-                use_container_width=True
-            )
-
-    except (
-        ValueError,
-        UnicodeDecodeError,
-        json.JSONDecodeError,
-        pd.errors.ParserError,
-        pd.errors.EmptyDataError
-    ) as error:
-
-        validation_error = str(error)
-        questions_df = None
-
-    if validation_error:
-        st.error(
-            t(
-                "testset.invalid",
-                error=validation_error
-            )
-        )
+            st.dataframe(questions_df, width="stretch")
 
 
 # --------------------------------------------------
@@ -218,7 +174,7 @@ if testset:
 st.divider()
 st.subheader(t("summary.title"))
 
-if documents and questions_df is not None:
+if documents and not duplicate_names and questions_df is not None:
 
     total_size = sum(
         len(document.getvalue())
@@ -256,6 +212,7 @@ else:
 
 valid_dataset = (
     bool(documents)
+    and not duplicate_names
     and testset is not None
     and questions_df is not None
 )
@@ -277,54 +234,144 @@ if st.session_state.get("uploaded_dataset_fingerprint") != current_fingerprint:
 if valid_dataset:
 
     backend_summary = st.session_state.get("backend_dataset_summary")
+    if backend_summary is None and st.button(
+        t("dataset.upload_to_backend"), type="primary", key="send_dataset_to_backend"
+    ):
+        try:
+            with st.spinner(t("dataset.sending")):
+                backend_summary = upload_dataset(documents, testset)
+                dataset_id = backend_summary.get("dataset_id")
+                if not isinstance(dataset_id, str) or not dataset_id:
+                    raise APIClientError(t("dataset.missing_id"))
+            st.session_state["dataset_id"] = dataset_id
+            st.session_state["backend_dataset_summary"] = backend_summary
+        except APIClientError as error:
+            backend_summary = None
+            st.error(t("dataset.upload_error", error=str(error)))
 
-    if backend_summary is None:
-
-        if st.button(
-            t("dataset.upload_to_backend"),
-            type="primary",
-            key="send_dataset_to_backend"
-        ):
-
-            try:
-                with st.spinner(t("dataset.sending")):
-                    backend_summary = upload_dataset(
-                        documents,
-                        testset
-                    )
-
-                st.session_state["dataset_id"] = (
-                    backend_summary["dataset_id"]
-                )
-
-                st.session_state["backend_dataset_summary"] = (
-                    backend_summary
-                )
-
-                st.success(t("dataset.uploaded"))
-
-                st.caption(
-                    t(
-                        "dataset.backend_id",
-                        dataset_id=backend_summary["dataset_id"]
-                    )
-                )
-
-            except APIClientError as error:
-                st.error(
-                    t(
-                        "dataset.upload_error",
-                        error=str(error)
-                    )
-                )
-
-    else:
+    if backend_summary is not None:
         st.success(t("dataset.uploaded"))
+        st.caption(t("dataset.backend_id", dataset_id=backend_summary["dataset_id"]))
 
-        st.caption(
-            t(
-                "dataset.backend_id",
-                dataset_id=backend_summary["dataset_id"]
+
+ACTIVE_STATUSES = {"pending", "indexing", "running"}
+
+
+def render_configuration(defaults):
+    label = defaults["label"]
+    prefix = f"benchmark_{label}"
+    chunking = st.selectbox(
+        t("variants.chunking"),
+        CHUNKING_STRATEGIES,
+        index=CHUNKING_STRATEGIES.index(defaults["chunking"]),
+        format_func=lambda option: t(f"variants.{option}"),
+        key=f"{prefix}_chunking",
+    )
+    config = {"label": label, "chunking": chunking}
+    if chunking == "fixed_tokens":
+        for field, minimum, fallback in (
+            ("chunk_size_tokens", 1, 512),
+            ("chunk_overlap_tokens", 0, 64),
+        ):
+            key = f"{prefix}_{field}"
+            value = st.number_input(
+                t(f"variants.{field}"), min_value=minimum, value=defaults[field] or fallback,
+                key=key,
             )
-        )
+            config[field] = value
+    config["retrieval"] = st.selectbox(
+        t("variants.retrieval"),
+        RETRIEVAL_METHODS,
+        index=RETRIEVAL_METHODS.index(defaults["retrieval"]),
+        format_func=lambda option: t(f"variants.{option}"),
+        key=f"{prefix}_retrieval",
+    )
+    config["top_k"] = st.number_input(
+        t("variants.top_k"), min_value=1, max_value=50, value=defaults["top_k"],
+        key=f"{prefix}_top_k",
+    )
+    config["reranking_enabled"] = st.checkbox(
+        t("variants.reranking"), value=defaults["reranking_enabled"], key=f"{prefix}_reranking",
+    )
+    return config
 
+
+st.divider()
+st.subheader(t("variants.title"))
+count = st.selectbox(
+    t("variants.count"), range(MIN_CONFIGS, MAX_CONFIGS + 1), key="benchmark_config_count"
+)
+defaults = get_default_configurations()[:count]
+tabs = st.tabs([config["label"] for config in defaults])
+configurations = []
+for tab, variant in zip(tabs, defaults, strict=True):
+    with tab:
+        configurations.append(render_configuration(variant))
+
+dataset_id = st.session_state.get("dataset_id")
+progress = st.session_state.get("experiment_progress")
+active = progress is not None and progress["status"] in ACTIVE_STATUSES
+if dataset_id is None:
+    st.info(t("benchmark.requires_dataset"))
+
+if st.button(
+    t("benchmark.start"), type="primary", key="start_benchmark",
+    disabled=dataset_id is None or active,
+):
+    try:
+        payload = build_experiment_payload(dataset_id, configurations)
+        with st.spinner(t("benchmark.starting")):
+            progress = create_experiment(payload)
+            experiment_id = progress.get("experiment_id")
+            if not isinstance(experiment_id, str) or not experiment_id:
+                raise APIClientError(t("benchmark.missing_id"))
+        st.session_state["experiment_id"] = experiment_id
+        st.session_state["experiment_progress"] = progress
+        st.rerun()
+    except (ValueError, APIClientError) as error:
+        st.error(t("benchmark.start_error", error=str(error)))
+
+
+@st.fragment(run_every=2 if active else None)
+def render_progress():
+    progress = st.session_state["experiment_progress"]
+    experiment_id = st.session_state["experiment_id"]
+    st.subheader(t("benchmark.progress"))
+    st.caption(t("benchmark.id", experiment_id=experiment_id))
+
+    if active:
+        try:
+            progress = get_progress(experiment_id)
+            st.session_state["experiment_progress"] = progress
+        except APIClientError as error:
+            st.warning(t("benchmark.poll_error", error=str(error)))
+        else:
+            if progress["status"] not in ACTIVE_STATUSES:
+                st.rerun()
+
+    status = progress["status"]
+    current_config = progress["current_config"]
+    total_configs = progress["total_configs"]
+    current_question = progress["current_question"]
+    total_questions = progress["total_questions"]
+    fraction = 0.0
+    if status == "completed":
+        fraction = 1.0
+    elif current_config and total_configs and total_questions:
+        completed = (current_config - 1) * total_questions + current_question
+        fraction = min(1.0, completed / (total_configs * total_questions))
+
+    st.progress(fraction, text=t(f"benchmark.{status}"))
+    if status == "running":
+        st.caption(t(
+            "benchmark.counters", config=current_config, configs=total_configs,
+            question=current_question, questions=total_questions,
+        ))
+    if status == "failed":
+        st.error(progress.get("message") or t("benchmark.failed"))
+    elif status == "completed":
+        st.success(t("benchmark.completed"))
+
+
+if progress is not None:
+    render_progress()

@@ -31,10 +31,6 @@ TRANSLATIONS = {
         ),
         "testset.invalid_type": "The JSON file must contain a list of questions.",
         "testset.missing_fields": "Missing required fields: {fields}",
-        "testset.empty_values": (
-            "Field '{field}' contains empty values "
-            "(rows: {rows})."
-        ),
         "testset.empty": "The test set does not contain any questions.",
         "testset.success": "Successfully loaded {count} questions.",
         "testset.preview": "Preview questions",
@@ -56,9 +52,37 @@ TRANSLATIONS = {
         "dataset.backend_id": "Dataset ID: {dataset_id}",
         "dataset.upload_error": "Dataset upload failed: {error}",
 
-
-
-
+        "documents.duplicate_names": "Documents must have unique names: {names}",
+        "testset.invalid_row": "Row {row} must be an object.",
+        "testset.row_missing_fields": "Row {row} is missing fields: {fields}",
+        "testset.invalid_value": "Row {row}: field '{field}' must contain non-empty text.",
+        "dataset.missing_id": "The backend response did not include a dataset ID.",
+        "variants.title": "4. RAG configurations",
+        "variants.count": "Number of configurations",
+        "variants.chunking": "Chunking strategy",
+        "variants.fixed_tokens": "Fixed token count",
+        "variants.structural": "Document structure",
+        "variants.chunk_size_tokens": "Chunk size (tokens)",
+        "variants.chunk_overlap_tokens": "Chunk overlap (tokens)",
+        "variants.retrieval": "Retrieval method",
+        "variants.dense": "Vector search (Dense)",
+        "variants.hybrid": "Hybrid search (Dense + BM25)",
+        "variants.top_k": "Number of retrieved chunks (k)",
+        "variants.reranking": "Enable reranking",
+        "benchmark.requires_dataset": "Send the dataset to the backend to run a benchmark.",
+        "benchmark.start": "Run benchmark",
+        "benchmark.starting": "Starting the benchmark…",
+        "benchmark.missing_id": "The backend response did not include an experiment ID.",
+        "benchmark.start_error": "Could not start the benchmark: {error}",
+        "benchmark.progress": "Benchmark progress",
+        "benchmark.id": "Experiment ID: {experiment_id}",
+        "benchmark.poll_error": "Could not refresh progress. Retrying automatically. {error}",
+        "benchmark.pending": "Waiting in the queue",
+        "benchmark.indexing": "Indexing documents",
+        "benchmark.running": "Benchmark in progress",
+        "benchmark.completed": "Benchmark completed",
+        "benchmark.failed": "Benchmark failed",
+        "benchmark.counters": "Configuration {config}/{configs}, questions completed {question}/{questions}",
     },
 
     "pl": {
@@ -89,10 +113,6 @@ TRANSLATIONS = {
         ),
         "testset.invalid_type": "Plik JSON musi zawierać listę pytań.",
         "testset.missing_fields": "Brak wymaganych pól: {fields}",
-        "testset.empty_values": (
-            "Pole '{field}' zawiera puste wartości "
-            "(wiersze: {rows})."
-        ),
         "testset.empty": "Testset nie zawiera żadnych pytań.",
         "testset.success": "Poprawnie wczytano {count} pytań.",
         "testset.preview": "Podgląd pytań",
@@ -113,6 +133,38 @@ TRANSLATIONS = {
         "dataset.uploaded": "Zbiór danych został zapisany w backendzie.",
         "dataset.backend_id": "ID zbioru danych: {dataset_id}",
         "dataset.upload_error": "Nie udało się wysłać zbioru: {error}",
+
+        "documents.duplicate_names": "Nazwy dokumentów muszą być unikalne: {names}",
+        "testset.invalid_row": "Wiersz {row} musi być obiektem.",
+        "testset.row_missing_fields": "Brak pól w wierszu {row}: {fields}",
+        "testset.invalid_value": "Wiersz {row}: pole „{field}” musi zawierać niepusty tekst.",
+        "dataset.missing_id": "Odpowiedź backendu nie zawiera identyfikatora zbioru.",
+        "variants.title": "4. Warianty RAG",
+        "variants.count": "Liczba wariantów",
+        "variants.chunking": "Strategia dzielenia dokumentów",
+        "variants.fixed_tokens": "Stała liczba tokenów",
+        "variants.structural": "Struktura dokumentu",
+        "variants.chunk_size_tokens": "Rozmiar fragmentu (tokeny)",
+        "variants.chunk_overlap_tokens": "Nakładanie fragmentów (tokeny)",
+        "variants.retrieval": "Metoda wyszukiwania",
+        "variants.dense": "Wektorowe (Dense)",
+        "variants.hybrid": "Hybrydowe (Dense + BM25)",
+        "variants.top_k": "Liczba pobieranych fragmentów (k)",
+        "variants.reranking": "Włącz reranking",
+        "benchmark.requires_dataset": "Wyślij zbiór do backendu, aby uruchomić benchmark.",
+        "benchmark.start": "Uruchom benchmark",
+        "benchmark.starting": "Uruchamianie benchmarku…",
+        "benchmark.missing_id": "Odpowiedź backendu nie zawiera identyfikatora eksperymentu.",
+        "benchmark.start_error": "Nie udało się uruchomić benchmarku: {error}",
+        "benchmark.progress": "Postęp benchmarku",
+        "benchmark.id": "ID eksperymentu: {experiment_id}",
+        "benchmark.poll_error": "Nie udało się odświeżyć postępu. Ponawiam automatycznie. {error}",
+        "benchmark.pending": "Oczekiwanie w kolejce",
+        "benchmark.indexing": "Indeksowanie dokumentów",
+        "benchmark.running": "Benchmark w toku",
+        "benchmark.completed": "Benchmark ukończony",
+        "benchmark.failed": "Benchmark zakończył się błędem",
+        "benchmark.counters": "Wariant {config}/{configs}, ukończone pytania {question}/{questions}",
     }
 }
 

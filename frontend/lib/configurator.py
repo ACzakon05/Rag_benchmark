@@ -25,7 +25,7 @@ MAX_CONFIGS = 4
 
 
 def get_default_configurations() -> list[dict]:
-    """Zwraca dwie przykładowe konfiguracje startowe."""
+    """Zwraca domyślne ustawienia wariantów A–D."""
 
     return [
         {
@@ -45,6 +45,24 @@ def get_default_configurations() -> list[dict]:
             "retrieval": "dense",
             "top_k": 5,
             "reranking_enabled": False,
+        },
+        {
+            "label": "C",
+            "chunking": "fixed_tokens",
+            "chunk_size_tokens": 512,
+            "chunk_overlap_tokens": 64,
+            "retrieval": "hybrid",
+            "top_k": 5,
+            "reranking_enabled": False,
+        },
+        {
+            "label": "D",
+            "chunking": "fixed_tokens",
+            "chunk_size_tokens": 512,
+            "chunk_overlap_tokens": 64,
+            "retrieval": "hybrid",
+            "top_k": 5,
+            "reranking_enabled": True,
         },
     ]
 
