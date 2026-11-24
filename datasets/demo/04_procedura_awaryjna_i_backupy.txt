@@ -1,0 +1,7 @@
+Harmonogram kopii zapasowych baz danych PostgreSQL w środowisku produkcyjnym zakłada pełny zrzut wykonywany codziennie o godzinie 02:30 UTC oraz ciągłą archiwizację dzienników WAL co 5 minut do zaszyfrowanego zasobnika S3 w regionie eu-west-1.
+
+Cele odzyskiwania po awarii dla usług kluczowych wynoszą: RPO (maksymalna dopuszczalna utrata danych) równe 5 minut oraz RTO (maksymalny czas przywrócenia działania usługi) wynoszące 30 minut. Dla środowiska analitycznego RTO wynosi 4 godziny.
+
+Testy odtwarzania z kopii zapasowej przeprowadzane są automatycznie w każdą pierwszą niedzielę miesiąca na odizolowanym klastrze weryfikacyjnym. Raport z weryfikacji integralności trafia na kanał #ops-backups oraz do audytora bezpieczeństwa.
+
+W razie całkowitej awarii regionu podstawowego eu-central-1 decyzję o przełączeniu ruchu na region zapasowy eu-west-1 podejmuje dyżurny Site Reliability Engineer wspólnie z CTO. Przełączenie DNS realizuje skrypt failover-region.sh --target eu-west-1.
