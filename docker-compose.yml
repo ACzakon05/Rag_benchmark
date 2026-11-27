@@ -65,13 +65,13 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "5173:5173"
+      - "8501:8501"
+    environment:
+      API_BASE_URL: http://backend:8000/api/v1
     volumes:
       - ./frontend:/app
-      - /app/node_modules
     depends_on:
       - backend
-    # command: npm run dev -- --host
 
   postgres:
     image: pgvector/pgvector:pg17
